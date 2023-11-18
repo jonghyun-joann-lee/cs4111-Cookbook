@@ -1,5 +1,3 @@
-#test comment for demo
-
 """
 Columbia's COMS W4111.001 Introduction to Databases
 Example Webserver
@@ -29,8 +27,9 @@ app = Flask(__name__, template_folder=tmpl_dir)
 # For example, if you had username gravano and password foobar, then the following line would be:
 #
 #     DATABASEURI = "postgresql://gravano:foobar@34.75.94.195/proj1part2"
+#     New server: 34.74.171.121
 #
-DATABASEURI = "postgresql://user:password@34.75.94.195/proj1part2"
+DATABASEURI = "postgresql://jl6509:6509@34.74.171.121/proj1part2"
 
 
 #
