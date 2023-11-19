@@ -1,4 +1,3 @@
-# Testing on joann branch
 """
 Columbia's COMS W4111.001 Introduction to Databases
 Example Webserver
@@ -110,9 +109,9 @@ def index():
 
   """
 
+  """
   # DEBUG: this is debugging code to see what request looks like
   print(request.args)
-
 
   #
   # example of a database query 
@@ -132,6 +131,30 @@ def index():
   results = cursor.mappings().all()
   for result in results:
     names.append(result["name"])
+  cursor.close()
+  """
+
+  # Query to get all categories
+  cursor = g.conn.execute(text("""SELECT CategoryName FROM Categories"""))
+  g.conn.commit()
+  all_categories = []
+  results = cursor.mappings().all()
+  for result in results:
+    all_categories.append(result["categoryname"])
+  cursor.close()
+
+  # Query to get top 5 recipes with the highest aggregated rating
+  # (if there is a tie, then choose based on lower RecipeID)
+  cursor = g.conn.execute(text("""SELECT R.RecipeName, P.DisplayName, R.AggregatedRating
+                               FROM Recipes_written_by R, Authors A, People P
+                               WHERE R.UserID = A.UserID AND A.UserID = P.UserID
+                               ORDER BY R.AggregatedRating DESC, R.RecipeID ASC
+                               LIMIT 5"""))
+  g.conn.commit()
+  top_5_recipes = [] # a list of tuples
+  results = cursor.mappings().all()
+  for result in results:
+    top_5_recipes.append((result["recipename"], result["displayname"], result["aggregatedrating"]))
   cursor.close()
 
   #
@@ -160,8 +183,9 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
-  context = dict(data = names)
+  # context = dict(data = names)
 
+  context = dict(categories=all_categories, recipes=top_5_recipes)
 
   #
   # render_template looks in the templates/ folder for files.
@@ -196,6 +220,14 @@ def add():
 def login():
     abort(401)
     this_is_never_executed()
+
+# Recipe Insights
+@app.route('/recipe/<int:recipe_id>')
+def show_recipe(recipe_id):
+  # show the recipe with all of its comprehensive details
+  recipe_query = text("SELECT * FROM Recipes_written_by WHERE RecipeID=recipe")
+
+
 
 
 if __name__ == "__main__":
