@@ -203,22 +203,23 @@ def index():
 #
 @app.route('/category/<category_name>')
 def category(category_name):
+  params_dict = {"categoryname": category_name}
   cursor = g.conn.execute(text("""
                                SELECT R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
                                AND C.CategoryName = :categoryname
-                               """), categoryname=category_name)
+                               """), params_dict)
   g.conn.commit()
   recipes_in_category = [] # a list of tuples 
-  for result in cursor:
-    time = result[3] #R.TotalTime is integer in minutes
-    hours = time // 60
+  results = cursor.mappings().all()
+  for result in results:
+    time = result[3] # R.TotalTime is integer in minutes
+    hours = time // 60 # want to convert to ~ hr ~ min
     mins = time % 60
-    formatted_time = f"{hours} hr {mins} min"
-    result[3] = formatted_time #overwrite TotalTime with the formatted version
-    recipes_in_category.append(tuple(result))
+    formatted_time = f"{hours} hr {mins} min" 
+    recipes_in_category.append((result['recipename'], result['displayname'], result['categoryname'], formatted_time, result['aggregatedrating'], result['calories'], result['sugar']))
   cursor.close()
 
   context = dict(category=category_name, recipes=recipes_in_category)
