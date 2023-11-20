@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - All Recipes</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+  <h2>All Recipes</h2>
+  {% if recipes %}
+    <table>
+        <tr>
+        <th>Recipe Name</th>
+        <th>Author</th>
+        <th>Category</th>
+        <th>Total Time</th>
+        <th>Aggregated Rating</th>
+        <th>Calories</th>
+        <th>Sugar (grams)</th>
+        </tr>
+    
+        {% for recipe in recipes %}
+        <tr>
+        <td>{{ recipe[0] }}</td> <!-- Recipe Name -->
+        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td>
+            {% for category_name, category_id in recipe[2] %} <!-- recipe[2]=[(CategoryName, CategoryID)] -->
+            <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>
+        </td> 
+        <td>{{ recipe[3] }}</td> <!-- Total Time -->
+        <td>{{ recipe[4] }}</td> <!-- Aggregated Rating -->
+        <td>{{ recipe[5] }}</td> <!-- Calories -->
+        <td>{{ recipe[6] }}</td> <!-- Sugar (grams) -->
+        </tr>
+        {% endfor %}
+    </table>
+  {% else %}
+    <p>There are no recipes added to GravanosCookBook.</p>
+  {% endif %}
+  
+  <h3><a href="/">Go back to main page</a></h3>
+
+</body>
+
+</html>

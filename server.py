@@ -201,6 +201,8 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
+
+# A page for each category showing a list of all recipes in the category
 @app.route('/category/<int:category_id>')
 def category(category_id):
   params_dict = {"categoryid": category_id}
@@ -238,7 +240,52 @@ def category(category_id):
   return render_template("category_recipes.html", **context)
 
 
+# A page that shows a list of all recipes
+@app.route('/recipes')
+def recipes():
+  # Get all recipes from the database
+  # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
+  cursor = g.conn.execute(text("""
+                               SELECT R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               """))
+  g.conn.commit()
+  results = cursor.mappings().all()
 
+  # Process the result so that we (intuitionally) have only one row for one recipe (handle multiple categories)
+  recipe_data = {}
+  for result in results:
+    recipe_id = result["recipeid"]
+    if recipe_id not in recipe_data:
+      recipe_data[recipe_id] = {
+        "recipename": result["recipename"],
+        "displayname": result["displayname"],
+        "categories": [(result["categoryname"], result["categoryid"])],
+        "totaltime": result["totaltime"], 
+        "aggregatedrating": result["aggregatedrating"], 
+        "calories": result["calories"], 
+        "sugar": result["sugar"]
+        }
+    else: # if recipe_id is already in recipe_data (i.e., if recipe belongs to more than one category)
+      recipe_data[recipe_id]['categories'].append((result["categoryname"], result["categoryid"]))
+  cursor.close()
+
+  # Convert recipe_data to a list of tuples to pass onto the template
+  all_recipes = []
+  for recipe_id, data in recipe_data.items(): # data is dict containing all info of a recipe
+    time = data["totaltime"] # totaltime is integer in minutes
+    hours = int(time // 60) # want to convert to ~ hr ~ min
+    mins = int(time % 60)
+    if hours > 0:
+      formatted_time = f"{hours} hr {mins} min"
+    else:
+      formatted_time = f"{mins} min"
+    all_recipes.append((data["recipename"], data["displayname"], data["categories"], formatted_time, data["aggregatedrating"], data["calories"], data["sugar"]))
+  
+  context = dict(recipes=all_recipes)
+  return render_template("all_recipes.html", **context)
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
@@ -257,7 +304,7 @@ def login():
 
 # Recipe Insights
 @app.route('/recipe/<int:recipe_id>')
-def show_recipe(recipe_id):
+def recipe_insights(recipe_id):
   # show the recipe with all of its comprehensive details
   recipe_query = text("SELECT * FROM Recipes_written_by WHERE RecipeID=recipe")
 
