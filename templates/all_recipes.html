@@ -33,6 +33,7 @@
         <td>
             {% for category_name, category_id in recipe[2] %} <!-- recipe[2]=[(CategoryName, CategoryID)] -->
             <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>
+            {% endfor %}
         </td> 
         <td>{{ recipe[3] }}</td> <!-- Total Time -->
         <td>{{ recipe[4] }}</td> <!-- Aggregated Rating -->
