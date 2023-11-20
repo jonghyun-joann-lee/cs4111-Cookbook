@@ -12,7 +12,9 @@
 </head>
 
 <body>
-  <h1>{{category}}</h1>
+  <h1>GravanosCookBook</h1>
+
+  <h2>{{category}}</h2>
   <p>These are all the recipies in the selected category: {{category}}</p>
   <table>
     <tr>
@@ -29,16 +31,15 @@
     <tr>
       <td>{{ recipe[0] }}</td> <!-- Recipe Name -->
       <td>{{ recipe[1] }}</td> <!-- Author -->
-      <td>{{ recipe[2] }}</td> <!-- Category -->
-      <td>{{ recipe[3] }}</td> <!-- Total Time -->
-      <td>{{ recipe[4] }}</td> <!-- Aggregated Rating -->
-      <td>{{ recipe[5] }}</td> <!-- Calories -->
-      <td>{{ recipe[6] }}</td> <!-- Sugar (grams) -->
+      <td>{{ recipe[2] }}</td> <!-- Total Time -->
+      <td>{{ recipe[3] }}</td> <!-- Aggregated Rating -->
+      <td>{{ recipe[4] }}</td> <!-- Calories -->
+      <td>{{ recipe[5] }}</td> <!-- Sugar (grams) -->
     </tr>
     {% endfor %}
   </table>
   
-  <h3><a href="index">Go back to main page</a></h3>
+  <h3><a href="/">Go back to main page</a></h3>
 
 </body>
 

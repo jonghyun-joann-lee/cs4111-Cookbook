@@ -4,7 +4,7 @@ We used ChatGPT for the following tasks where the usage of it is allowed.
 
 1. Asked how to construct a table in HTML when writing category_recipes.html
 a. Prompt: 
-In HTML, how do you create a table with columns that are named Recipe Name, Author, Category, TotalTime, AggregatedRating, Calories, and Sugar (grams)? 
+In HTML, how do you create a table with columns that are named Recipe Name, Author, TotalTime, AggregatedRating, Calories, and Sugar (grams)? 
 
 b. Response: 
 Creating a table in HTML with specific column names involves using the <table>, <tr>, <th>, and <td> tags. Here's how you would structure a table with the columns "Recipe Name", "Author", "Category", "Total Time", "Aggregated Rating", "Calories", and "Sugar (grams)":
@@ -13,7 +13,6 @@ Creating a table in HTML with specific column names involves using the <table>, 
   <tr>
     <th>Recipe Name</th>
     <th>Author</th>
-    <th>Category</th>
     <th>Total Time</th>
     <th>Aggregated Rating</th>
     <th>Calories</th>
@@ -24,7 +23,6 @@ Creating a table in HTML with specific column names involves using the <table>, 
   <tr>
     <td>Example Recipe</td>
     <td>Example Author</td>
-    <td>Example Category</td>
     <td>Example Time</td>
     <td>Example Rating</td>
     <td>Example Calories</td>

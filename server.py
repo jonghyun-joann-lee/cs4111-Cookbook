@@ -205,7 +205,7 @@ def index():
 def category(category_name):
   params_dict = {"categoryname": category_name}
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -216,10 +216,10 @@ def category(category_name):
   results = cursor.mappings().all()
   for result in results:
     time = result["totaltime"] # totaltime is integer in minutes
-    hours = time // 60 # want to convert to ~ hr ~ min
-    mins = time % 60
+    hours = int(time // 60) # want to convert to ~ hr ~ min
+    mins = int(time % 60)
     formatted_time = f"{hours} hr {mins} min" 
-    recipes_in_category.append((result["recipename"], result["displayname"], result["categoryname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
+    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
   cursor.close()
 
   context = dict(category=category_name, recipes=recipes_in_category)
