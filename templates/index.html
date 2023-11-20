@@ -8,7 +8,7 @@
   </style>
 
 <head>
-  <title>GravanosCookBook</title>
+  <title>GravanosCookBook by Jonghyun (Joann) Lee and Dani Dassum</title>
 </head>
 
 <body>
@@ -18,19 +18,19 @@
   <h2>Recipe Categories</h2>
   <div>
     {% for category_name in categories %}
-    <div>{{category_name}}</div>
+    <div><a href="{{ url_for('category', category_name=category.name) }}">{{ category.name }}</a></div>
     {% endfor %}
   </div>
 
   <h2>Top 5 Recipes</h2>
   <div>
     {% for recipe in recipes %}
-    <div>{{recipe[0]}} by {{recipe[1]}} - Rating: {{recipe[2]}}</div>
+    <div>{{recipe[0]}} by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
     {% endfor %}
   </div>
 
 
-  <p>View all recipes</p>
+  <h3>View all recipes</h3>
 
   <p>Search for a recipe: </p>
 
