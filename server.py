@@ -204,8 +204,9 @@ def index():
 @app.route('/category/<int:category_id>')
 def category(category_id):
   params_dict = {"categoryid": category_id}
+  # Get all the recipes that belong to the given category_id
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryName
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -213,7 +214,6 @@ def category(category_id):
                                """), params_dict)
   g.conn.commit()
   recipes_in_category = [] # a list of tuples 
-  category_name = ""
   results = cursor.mappings().all()
   for result in results:
     time = result["totaltime"] # totaltime is integer in minutes
@@ -224,8 +224,15 @@ def category(category_id):
     else:
       formatted_time = f"{mins} min"
     recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
-    category_name = result["categoryname"]
   cursor.close()
+
+  # Get the name of the category with the given category_id
+  # Need to run this query separately because some categories do not have any recipes in it, thus not showing up in belongs_to
+  cursor = g.conn.execute(text("""SELECT C.CategoryName FROM Categories C WHERE C.CategoryID = :categoryid"""), params_dict)
+  g.conn.commit()
+  category_name = ""
+  for result in cursor:
+    category_name = result[0]
 
   context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
