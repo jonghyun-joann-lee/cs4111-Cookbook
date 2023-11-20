@@ -201,7 +201,7 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/category/<int: category_id>')
+@app.route('/category/<int:category_id>')
 def category(category_id):
   params_dict = {"categoryid": category_id}
   cursor = g.conn.execute(text("""
