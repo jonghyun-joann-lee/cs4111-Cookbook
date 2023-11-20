@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <style>
     body{ 
@@ -6,24 +7,37 @@
     }
   </style>
 
+<head>
+  <title>GravanosCookBook by Jonghyun (Joann) Lee and Dani Dassum</title>
+</head>
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+  <h1>Welcome to GravanosCookBook</h1>
+  <p>An all-in-one culinary experience for cooking enthusiasts like you!</p>
 
+  <h2>Recipe Categories</h2>
   <div>
-    {% for n in data %}
-    <div>{{n}}</div>
+    {% for category in categories %}
+    <div><a href="{{ url_for('category', category_id=category[0]) }}">{{ category[1] }}</a></div> <!-- category[0]=CategoryID, category[1]=CategoryName -->
     {% endfor %}
   </div>
 
-<p><a href="another">Go to the other page</a></p>
+  <h2>Top 5 Recipes</h2>
+  <div>
+    {% for recipe in recipes %}
+    <div>{{recipe[0]}} by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
+    {% endfor %}
+  </div>
+
+  <p><a href="recipes">View all recipes</a></p>
+
+  <p>Search for a recipe: </p>
+
 
 <form method="POST" action="/add">
 <p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
 </form>
 
 </body>
-
 
 </html>
