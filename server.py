@@ -215,11 +215,11 @@ def category(category_name):
   recipes_in_category = [] # a list of tuples 
   results = cursor.mappings().all()
   for result in results:
-    time = result[3] # R.TotalTime is integer in minutes
+    time = result["totaltime"] # totaltime is integer in minutes
     hours = time // 60 # want to convert to ~ hr ~ min
     mins = time % 60
     formatted_time = f"{hours} hr {mins} min" 
-    recipes_in_category.append((result['recipename'], result['displayname'], result['categoryname'], formatted_time, result['aggregatedrating'], result['calories'], result['sugar']))
+    recipes_in_category.append((result["recipename"], result["displayname"], result["categoryname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
   cursor.close()
 
   context = dict(category=category_name, recipes=recipes_in_category)
