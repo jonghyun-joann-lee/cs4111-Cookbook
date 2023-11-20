@@ -109,4 +109,31 @@ c. Usage:
 Incorporated the given code into category_recipes.html but changed the variable my_list to recipes 
 
 
+4. Asked how to check if it is the end of a list in HTML
+a. Prompt: 
+In HTML, I have a variable named recipe[2], which is a list of tuples. How do I check if it is the end of a list?  It not, I would like to add a comma right after the list item. If it is, I do not want to add a comma. Here are the lines of the HTML code that I wish to modify.
+
+        <td>
+            {% for category_name, category_id in recipe[2] %} <!-- recipe[2]=[(CategoryName, CategoryID)] -->
+            <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>
+            {% endfor %}
+        </td> 
+  
+b. Response:
+To modify your HTML code to include a comma after each list item except the last one in the recipe[2] list, you can utilize Jinja2's loop control variables. Jinja2, which is often used in Flask applications, provides a loop.last variable that can be used to check if the current iteration is the last in the loop. You can conditionally add a comma based on this.
+
+Here's how you can modify your code snippet:
+<td>
+    {% for category_name, category_id in recipe[2] %}
+        <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %},{% endif %}
+    {% endfor %}
+</td>
+
+In this code:
+
+{% if not loop.last %}, {% endif %}: This line checks if the current loop iteration is not the last one. If it's not the last, a comma (,) is added right after the link. The space after the comma ensures that there is a space between the comma and the next item in the list. If it is the last item, no comma is added.
+Remember that this solution assumes you are using Jinja2 templating with Flask or a similar Python web framework. If you're using a different templating engine, the approach might be slightly different.
+
+c. Usage:
+Incorporated the given code by ChatGPT into all_recipes.html
 
