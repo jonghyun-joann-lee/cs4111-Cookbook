@@ -235,7 +235,8 @@ def category(category_id):
   category_name = ""
   for result in cursor:
     category_name = result[0]
-
+  cursor.close()
+  
   context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
 
