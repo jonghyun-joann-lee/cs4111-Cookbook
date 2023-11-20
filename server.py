@@ -218,7 +218,10 @@ def category(category_name):
     time = result["totaltime"] # totaltime is integer in minutes
     hours = int(time // 60) # want to convert to ~ hr ~ min
     mins = int(time % 60)
-    formatted_time = f"{hours} hr {mins} min" 
+    if hours > 0:
+      formatted_time = f"{hours} hr {mins} min"
+    else:
+      formatted_time = f"     {mins} min"
     recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
   cursor.close()
 

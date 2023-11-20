@@ -91,7 +91,6 @@ a. Prompt:
 Is there a way to check if a variable passed onto HTML is empty or not when that variable is a list?
 
 b. Response:
-
 Yes, you can check if a variable passed into HTML is empty or not, even when that variable is a list. This can be achieved through various methods, depending on the server-side language you are using to generate the HTML. Here are some common approaches:
 ...(Approahces using JavaScript, PHP, etc.)
 Using Python (with a web framework like Flask or Django)
@@ -103,7 +102,10 @@ In the HTML template:
     <!-- List is empty -->
     <p>The list is empty</p>
 {% endif %}
-
+...(Other approaches)
 
 c. Usage:
+Incorporated the given code into category_recipes.html but changed the variable my_list to recipes 
+
+
 
