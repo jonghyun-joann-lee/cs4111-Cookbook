@@ -84,3 +84,26 @@ This setup will create a clickable link in your HTML template that directs users
 
 c. Usage:
 Copied the code provided by ChatGPT that uses href and the url_for function into index.html
+
+
+3. Asked if there is a way to check whether a variable is empty or not in HTML
+a. Prompt:
+Is there a way to check if a variable passed onto HTML is empty or not when that variable is a list?
+
+b. Response:
+
+Yes, you can check if a variable passed into HTML is empty or not, even when that variable is a list. This can be achieved through various methods, depending on the server-side language you are using to generate the HTML. Here are some common approaches:
+...(Approahces using JavaScript, PHP, etc.)
+Using Python (with a web framework like Flask or Django)
+In the HTML template:
+{% if my_list %}
+    <!-- List is not empty -->
+    <p>The list is not empty</p>
+{% else %}
+    <!-- List is empty -->
+    <p>The list is empty</p>
+{% endif %}
+
+
+c. Usage:
+

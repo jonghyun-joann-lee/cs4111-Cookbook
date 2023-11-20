@@ -14,30 +14,34 @@
 <body>
   <h1>GravanosCookBook</h1>
 
-  <h2>{{category}}</h2>
+  <h2>{{category}} Recipes</h2>
   <p>These are all the recipies in the selected category: {{category}}</p>
-  <table>
-    <tr>
-      <th>Recipe Name</th>
-      <th>Author</th>
-      <th>Category</th>
-      <th>Total Time</th>
-      <th>Aggregated Rating</th>
-      <th>Calories</th>
-      <th>Sugar (grams)</th>
-    </tr>
-  
-    {% for recipe in recipes %}
-    <tr>
-      <td>{{ recipe[0] }}</td> <!-- Recipe Name -->
-      <td>{{ recipe[1] }}</td> <!-- Author -->
-      <td>{{ recipe[2] }}</td> <!-- Total Time -->
-      <td>{{ recipe[3] }}</td> <!-- Aggregated Rating -->
-      <td>{{ recipe[4] }}</td> <!-- Calories -->
-      <td>{{ recipe[5] }}</td> <!-- Sugar (grams) -->
-    </tr>
-    {% endfor %}
-  </table>
+
+  {% if recipes %}
+    <table>
+        <tr>
+        <th>Recipe Name</th>
+        <th>Author</th>
+        <th>Total Time</th>
+        <th>Aggregated Rating</th>
+        <th>Calories</th>
+        <th>Sugar (grams)</th>
+        </tr>
+    
+        {% for recipe in recipes %}
+        <tr>
+        <td>{{ recipe[0] }}</td> <!-- Recipe Name -->
+        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td>{{ recipe[2] }}</td> <!-- Total Time -->
+        <td>{{ recipe[3] }}</td> <!-- Aggregated Rating -->
+        <td>{{ recipe[4] }}</td> <!-- Calories -->
+        <td>{{ recipe[5] }}</td> <!-- Sugar (grams) -->
+        </tr>
+        {% endfor %}
+    </table>
+  {% else %}
+    <p>There are no recipes added to this category yet</p>
+  {% endif %}
   
   <h3><a href="/">Go back to main page</a></h3>
 
