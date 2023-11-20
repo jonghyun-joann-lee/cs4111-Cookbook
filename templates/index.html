@@ -17,8 +17,8 @@
 
   <h2>Recipe Categories</h2>
   <div>
-    {% for category_name in categories %}
-    <div><a href="{{ url_for('category', category_name=category_name) }}">{{ category_name }}</a></div>
+    {% for category in categories %}
+    <div><a href="{{ url_for('category', category_id=category[0]) }}">{{ category[1] }}</a></div> <!-- category[0]=CategoryID, category[1]=CategoryName -->
     {% endfor %}
   </div>
 
@@ -28,7 +28,6 @@
     <div>{{recipe[0]}} by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
     {% endfor %}
   </div>
-
 
   <h3>View all recipes</h3>
 

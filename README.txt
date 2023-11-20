@@ -84,6 +84,7 @@ This setup will create a clickable link in your HTML template that directs users
 
 c. Usage:
 Copied the code provided by ChatGPT that uses href and the url_for function into index.html
+(Update) Use the idea but made all necessary changes to use category_id instead of the name after encounting issues with the url when category name contains '/' (e.g. Soy/Tofu)
 
 
 3. Asked if there is a way to check whether a variable is empty or not in HTML

@@ -135,12 +135,12 @@ def index():
   """
 
   # Query to get all categories
-  cursor = g.conn.execute(text("""SELECT CategoryName FROM Categories"""))
+  cursor = g.conn.execute(text("""SELECT CategoryID, CategoryName FROM Categories"""))
   g.conn.commit()
-  all_categories = []
+  all_categories = [] # a list of tuples
   results = cursor.mappings().all()
   for result in results:
-    all_categories.append(result["categoryname"])
+    all_categories.append((result["categoryid"], result["categoryname"]))
   cursor.close()
 
   # Query to get top 5 recipes with the highest aggregated rating
@@ -201,18 +201,19 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/category/<category_name>')
-def category(category_name):
-  params_dict = {"categoryname": category_name}
+@app.route('/category/<int: category_id>')
+def category(category_id):
+  params_dict = {"categoryid": category_id}
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryName
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
-                               AND C.CategoryName = :categoryname
+                               AND C.CategoryID = :categoryid
                                """), params_dict)
   g.conn.commit()
   recipes_in_category = [] # a list of tuples 
+  category_name = ""
   results = cursor.mappings().all()
   for result in results:
     time = result["totaltime"] # totaltime is integer in minutes
@@ -221,11 +222,12 @@ def category(category_name):
     if hours > 0:
       formatted_time = f"{hours} hr {mins} min"
     else:
-      formatted_time = f"     {mins} min"
+      formatted_time = f"{mins} min"
     recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
+    category_name = result["categoryname"]
   cursor.close()
 
-  context = dict(category=category_name, recipes=recipes_in_category)
+  context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
 
 
