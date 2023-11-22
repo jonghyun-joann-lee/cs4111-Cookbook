@@ -13,31 +13,35 @@
 
 <body>
     <h1>GravanosCookBook</h1>
-    <h2>{{ ingredientname }} available at Whole Foods Market</h2>
+    {% if products %}
+        <h2>{{ ingredientname }} available at Whole Foods Market</h2>
 
-    <table>
-        <tr>
-        <th>Product ID</th>
-        <th>Company Name</th>
-        <th>Product Name</th>
-        <th>Regular Price</th>
-        <th>Sale Price</th>
-        <th>Prime Price</th>
-        <th>Link</th>
-        </tr>
-
-        {% for product_id, product in products.items() %}
+        <table>
             <tr>
-            <td>{{ product_id }}</td> 
-            <td>{{ product.companyname }}</td> 
-            <td>{{ product.productname }}</td>
-            <td>{{ product.regularprice }}</td>
-            <td>{{ product.saleprice }}</td>
-            <td>{{ product.primeprice }}</td>
-            <td>{{ product.link }}</td>
+            <th>Product ID</th>
+            <th>Company Name</th>
+            <th>Product Name</th>
+            <th>Regular Price</th>
+            <th>Sale Price</th>
+            <th>Prime Price</th>
+            <th>Link</th>
             </tr>
-        {% endfor %}
-    </table>
+
+            {% for product_id, product in products.items() %}
+                <tr>
+                <td>{{ product_id }}</td> 
+                <td>{{ product.companyname }}</td> 
+                <td>{{ product.productname }}</td>
+                <td>{{ product.regularprice }}</td>
+                <td>{{ product.saleprice }}</td>
+                <td>{{ product.primeprice }}</td>
+                <td>{{ product.link }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Sorry, there are no Whole Foods products associated with this ingredient yet.</p>
+    {% endif %}
 
     <h3><a href="/">Go to main page</a></h3>
 
