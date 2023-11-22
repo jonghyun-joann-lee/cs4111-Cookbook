@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+    <title>GravanosCookBook - {{ ingredientname.title() }}</title>
+</head>
+
+<body>
+    <h1>GravanosCookBook</h1>
+    {% if products %}
+        <h2>{{ ingredientname.title() }} available at Whole Foods Market</h2>
+
+        <table>
+            <tr>
+            <th>Company Name</th>
+            <th>Product Name</th>
+            <th>Regular Price</th>
+            <th>Sale Price</th>
+            <th>Prime Price</th>
+            <th>Link</th>
+            </tr>
+
+            {% for product_id, product in products.items() %}
+                <tr>
+                <td>{{ product.companyname }}</td> 
+                <td>{{ product.productname }}</td>
+                <td>{{ product.regularprice }}</td>
+                {% if product.saleprice %}
+                    <td>{{ product.saleprice }}</td>
+                {% else %} <!-- If None, display it as N/A -->
+                    <td>N/A</td>
+                {% endif %}
+                {% if product.primeprice %}
+                    <td>{{ product.primeprice }}</td>
+                {% else %} <!-- If None, display it as N/A -->
+                    <td>N/A</td>
+                {% endif %}
+                <td><a href="{{ product.link }}" target="_blank">{{ product.link }}</a></td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Sorry, there are no Whole Foods products associated with this ingredient yet.</p>
+    {% endif %}
+
+    <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>
