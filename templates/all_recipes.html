@@ -26,19 +26,19 @@
         <th>Sugar (grams)</th>
         </tr>
     
-        {% for recipe in recipes %}
+        {% for recipe_id, recipe in recipes.items() %}
         <tr>
-        <td>{{ recipe[0] }}</td> <!-- Recipe Name -->
-        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td>{{ recipe.recipename }}</td> 
+        <td>{{ recipe.displayname }}</td> 
         <td>
-            {% for category_name, category_id in recipe[2] %} <!-- recipe[2]=[(CategoryName, CategoryID)] -->
+            {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
               <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
             {% endfor %}
-        </td> 
-        <td>{{ recipe[3] }}</td> <!-- Total Time -->
-        <td>{{ recipe[4] }}</td> <!-- Aggregated Rating -->
-        <td>{{ recipe[5] }}</td> <!-- Calories -->
-        <td>{{ recipe[6] }}</td> <!-- Sugar (grams) -->
+        </td>
+        <td>{{ recipe.totaltime }}</td>
+        <td>{{ recipe.aggregatedrating }}</td>
+        <td>{{ recipe.calories }}</td>
+        <td>{{ recipe.sugar }}</td>
         </tr>
         {% endfor %}
     </table>

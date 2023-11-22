@@ -202,6 +202,19 @@ def index():
 # The functions for each app.route need to have different names
 #
 
+
+# Helper function to convert time into ~ hr ~ min format
+def convert_time(time):
+  hours = int(time // 60)
+  mins = int(time % 60)
+  if hours > 0:
+    formatted_time = f"{hours} hr {mins} min"
+  else:
+    formatted_time = f"{mins} min"
+
+  return formatted_time
+
+
 # A page for each category showing a list of all recipes in the category
 @app.route('/category/<int:category_id>')
 def category(category_id):
@@ -218,13 +231,7 @@ def category(category_id):
   recipes_in_category = [] # a list of tuples 
   results = cursor.mappings().all()
   for result in results:
-    time = result["totaltime"] # totaltime is integer in minutes
-    hours = int(time // 60) # want to convert to ~ hr ~ min
-    mins = int(time % 60)
-    if hours > 0:
-      formatted_time = f"{hours} hr {mins} min"
-    else:
-      formatted_time = f"{mins} min"
+    formatted_time = convert_time(result["totaltime"])
     recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
   cursor.close()
 
@@ -236,7 +243,7 @@ def category(category_id):
   for result in cursor:
     category_name = result[0]
   cursor.close()
-  
+
   context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
 
@@ -256,37 +263,105 @@ def recipes():
   results = cursor.mappings().all()
 
   # Process the result so that we (intuitionally) have only one row for one recipe (handle multiple categories)
-  recipe_data = {}
+  all_recipes = {} # This is going to be a nested dictionary
   for result in results:
     recipe_id = result["recipeid"]
-    if recipe_id not in recipe_data:
-      recipe_data[recipe_id] = {
+    if recipe_id not in all_recipes: # If it is the first row for a recipe
+      # First, convert total time into ~ hr ~ min
+      formatted_time = convert_time(result["totaltime"])
+
+      all_recipes[recipe_id] = {
         "recipename": result["recipename"],
         "displayname": result["displayname"],
         "categories": [(result["categoryname"], result["categoryid"])],
-        "totaltime": result["totaltime"], 
+        "totaltime": formatted_time, 
         "aggregatedrating": result["aggregatedrating"], 
         "calories": result["calories"], 
         "sugar": result["sugar"]
         }
-    else: # if recipe_id is already in recipe_data (i.e., if recipe belongs to more than one category)
-      recipe_data[recipe_id]['categories'].append((result["categoryname"], result["categoryid"]))
+    else: # if recipe_id is already in all_recipes (i.e., if recipe belongs to more than one category)
+      all_recipes[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+  
   cursor.close()
-
-  # Convert recipe_data to a list of tuples to pass onto the template
-  all_recipes = []
-  for recipe_id, data in recipe_data.items(): # data is dict containing all info of a recipe
-    time = data["totaltime"] # totaltime is integer in minutes
-    hours = int(time // 60) # want to convert to ~ hr ~ min
-    mins = int(time % 60)
-    if hours > 0:
-      formatted_time = f"{hours} hr {mins} min"
-    else:
-      formatted_time = f"{mins} min"
-    all_recipes.append((data["recipename"], data["displayname"], data["categories"], formatted_time, data["aggregatedrating"], data["calories"], data["sugar"]))
   
   context = dict(recipes=all_recipes)
   return render_template("all_recipes.html", **context)
+
+
+# Recipe Insights (View all details of a recipe, reviews, and required ingredients)
+@app.route('/recipe/<int:recipe_id>')
+def recipe_insights(recipe_id):
+  params_dict = {"recipeid": recipe_id}
+  # Get all details of the recipe, categories that it belongs to, and the author's name
+  # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
+  cursor = g.conn.execute(text("""
+                               SELECT R.*, P.DisplayName, C.CategoryName, C.CategoryID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  # Process the result to handle multiple categories
+  recipe_details = {}
+  for result in results:
+    if not recipe_details: # If this is the first row for this recipe
+      # First, convert all time into ~ hr ~ min
+      formatted_cooktime = convert_time(result["cooktime"])
+      formatted_preptime = convert_time(result["preptime"])
+      formatted_totaltime = convert_time(result["totaltime"])
+
+      recipe_details = {
+        "recipename": result["recipename"],
+        "cooktime": formatted_cooktime,
+        "preptime": formatted_preptime,
+        "totaltime": formatted_totaltime, 
+        "description": result["description"],
+        "instructions": result["instructions"],
+        "aggregatedrating": result["aggregatedrating"], 
+        "reviewcount": result["reviewcount"],
+        "servings": result["servings"],
+        "calories": result["calories"], 
+        "sugar": result["sugar"],
+        "datepublished": result["datepublished"],
+        "author": result["displayname"],
+        "categories": [(result["categoryname"], result["categoryid"])]
+        }
+    else: # if not the first row (i.e., if recipe belongs to more than one category)
+      recipe_details["categories"].append((result["categoryname"], result["categoryid"]))
+  
+  cursor.close()
+
+  # Get all reviews of the recipe with all details of each review and the user's name
+  cursor = g.conn.execute(text("""
+                               SELECT V.*, P.DisplayName
+                               FROM Recipes_written_by R, Reviews_created_by_evaluates V, Users U, People P
+                               WHERE R.RecipeID = V.RecipeID
+                               AND V.UserID = U.UserID AND U.UserID = P.UserID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_reviews = {}
+  for result in results: # each row/result corresponds to one review for the recipe
+    reviewnumber = result["reviewnumber"]
+    if reviewnumber not in all_reviews:
+      all_reviews[reviewnumber] = {
+        "rating": result["rating"],
+        "content": result["content"],
+        "datesubmitted": result["datesubmitted"],
+        "datemodified": result["datemodified"],
+        "author": result["displayname"]
+      }
+
+  cursor.close()
+
+  context = {"recipe": recipe_details, "reviews": all_reviews}
+  return render_template("recipe_insights.html", **context)
+
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
@@ -302,14 +377,6 @@ def add():
 def login():
     abort(401)
     this_is_never_executed()
-
-# Recipe Insights
-@app.route('/recipe/<int:recipe_id>')
-def recipe_insights(recipe_id):
-  # show the recipe with all of its comprehensive details
-  recipe_query = text("SELECT * FROM Recipes_written_by WHERE RecipeID=recipe")
-
-
 
 
 if __name__ == "__main__":
