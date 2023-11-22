@@ -376,16 +376,16 @@ def recipe_insights(recipe_id):
       # Nested query to check if there are Whole Foods products associated with this ingredient
       # If so, link the ingredient page to the ingredient name; If not, do not link
       params_dict = {"ingredientid": ingredientid}
-      cursor = g.conn.execute(text("""
+      cursor2 = g.conn.execute(text("""
                                    SELECT COUNT(*)
                                    FROM WholeFoodsProducts_linked_to W
                                    WHERE W.IngredientID = :ingredientid
                                    """), params_dict)
       g.conn.commit()
       has_whole_foods = False
-      for result in cursor:
-        if result[0] > 0: has_whole_foods = True
-      cursor.close()
+      for result2 in cursor2:
+        if result2[0] > 0: has_whole_foods = True
+      cursor2.close()
 
       all_ingredients[ingredientid] = {
         "ingredientname": result["ingredientname"],
