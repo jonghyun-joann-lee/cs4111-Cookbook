@@ -46,11 +46,10 @@
 
   <h3>Reviews ({{ recipe.reviewcount }})</h3>
   {% for reviewnumber, review in reviews.items() %}
-    <div>
-        <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
-        <p>"{{ review.content }}"</p>
-        <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
-    </div>
+    <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
+    <p>"{{ review.content }}"</p>
+    <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
+    <hr>
   {% endfor %}
 
 
