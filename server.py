@@ -377,8 +377,8 @@ def recipe_insights(recipe_id):
       # If so, link the ingredient page to the ingredient name; If not, do not link
       params_dict = {"ingredientid": ingredientid}
       cursor = g.conn.execute(text("""
-                                   SELECT COUNT(*),
-                                   FROM WholeFoodsProducts_linked_to W,
+                                   SELECT COUNT(*)
+                                   FROM WholeFoodsProducts_linked_to W
                                    WHERE W.IngredientID = :ingredientid
                                    """), params_dict)
       g.conn.commit()
