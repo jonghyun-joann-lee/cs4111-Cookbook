@@ -145,7 +145,7 @@ def index():
 
   # Query to get top 5 recipes with the highest aggregated rating
   # (if there is a tie, then choose based on lower RecipeID)
-  cursor = g.conn.execute(text("""SELECT R.RecipeName, P.DisplayName, R.AggregatedRating
+  cursor = g.conn.execute(text("""SELECT R.RecipeName, P.DisplayName, R.AggregatedRating, R.RecipeID
                                FROM Recipes_written_by R, Authors A, People P
                                WHERE R.UserID = A.UserID AND A.UserID = P.UserID
                                ORDER BY R.AggregatedRating DESC, R.RecipeID ASC
@@ -154,7 +154,7 @@ def index():
   top_5_recipes = [] # a list of tuples
   results = cursor.mappings().all()
   for result in results:
-    top_5_recipes.append((result["recipename"], result["displayname"], result["aggregatedrating"]))
+    top_5_recipes.append((result["recipename"], result["displayname"], result["aggregatedrating"], result["recipeid"]))
   cursor.close()
 
   #
@@ -221,7 +221,7 @@ def category(category_id):
   params_dict = {"categoryid": category_id}
   # Get all the recipes that belong to the given category_id
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -232,7 +232,7 @@ def category(category_id):
   results = cursor.mappings().all()
   for result in results:
     formatted_time = convert_time(result["totaltime"])
-    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"]))
+    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"]))
   cursor.close()
 
   # Get the name of the category with the given category_id

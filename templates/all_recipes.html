@@ -28,7 +28,7 @@
     
         {% for recipe_id, recipe in recipes.items() %}
         <tr>
-        <td>{{ recipe.recipename }}</td> 
+        <td><a href="/recipe/{{ recipe_id }}">{{ recipe.recipename }}</a></td> 
         <td>{{ recipe.displayname }}</td> 
         <td>
             {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
