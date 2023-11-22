@@ -30,7 +30,7 @@
   <hr>
 
   <p>Ready In: {{ recipe.totaltime }}</p>
-  <p>Preparation Time: {{ recipe.preptime }}    Cooking Time: {{ recipe.cooktime }} </p>
+  <p>Preparation Time: {{ recipe.preptime }}, Cooking Time: {{ recipe.cooktime }} </p>
   
   <p>Servings: {{ recipe.servings }}</p>
   <p>Calories: {{ recipe.calories }}</p>
@@ -47,13 +47,13 @@
 
   <h3>Reviews ({{ recipe.reviewcount }})</h3>
   {% for reviewnumber, review in reviews.items() %}
-    <p>Rating: review.rating    Written by: {{ review.author }}</p>
+    <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
     <p>"{{ review.content }}"</p>
-    <p>Submitted on {{ review.datesubmitted }}  Modified on {{ review.datemodified }}</p>
+    <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
   {% endfor %}
 
 
-  <h4><a href="/">Go back to main page</a></h4>
+  <h4><a href="/">Go to main page</a></h4>
 
 </body>
 
