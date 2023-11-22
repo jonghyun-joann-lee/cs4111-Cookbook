@@ -373,9 +373,24 @@ def recipe_insights(recipe_id):
   for result in results: # each row/result corresponds to one ingredient for the recipe
     ingredientid = result["ingredientid"]
     if ingredientid not in all_ingredients:
+      # Nested query to check if there are Whole Foods products associated with this ingredient
+      # If so, link the ingredient page to the ingredient name; If not, do not link
+      params_dict = {"ingredientid": ingredientid}
+      cursor = g.conn.execute(text("""
+                                   SELECT COUNT(*),
+                                   FROM WholeFoodsProducts_linked_to W,
+                                   WHERE W.IngredientID = :ingredientid
+                                   """), params_dict)
+      g.conn.commit()
+      has_whole_foods = False
+      for result in cursor:
+        if result[0] > 0: has_whole_foods = True
+      cursor.close()
+
       all_ingredients[ingredientid] = {
         "ingredientname": result["ingredientname"],
-        "itemamount": result["itemamount"]
+        "itemamount": result["itemamount"],
+        "wholefoods": has_whole_foods
       }
 
   cursor.close()
@@ -411,7 +426,7 @@ def ingredient(ingredient_id):
       "primeprice": result["primeprice"],
       "link": result["link"]
     }
-    
+
   cursor.close()
 
   context = {"ingredientname": ingredient_name, "products": all_products}
