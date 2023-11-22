@@ -382,7 +382,7 @@ def recipe_insights(recipe_id):
                                    WHERE W.IngredientID = :ingredientid
                                    """), params_dict)
       g.conn.commit()
-      has_whole_foods = False
+      has_whole_foods = False # True if there are associated Whole Foods products
       for result2 in cursor2:
         if result2[0] > 0: has_whole_foods = True
       cursor2.close()

@@ -14,7 +14,7 @@
 <body>
     <h1>GravanosCookBook</h1>
     {% if products %}
-        <h2>{{ ingredientname }} available at Whole Foods Market</h2>
+        <h2>{{ ingredientname.title() }} available at Whole Foods Market</h2>
 
         <table>
             <tr>
@@ -35,7 +35,7 @@
                 <td>{{ product.regularprice }}</td>
                 <td>{{ product.saleprice }}</td>
                 <td>{{ product.primeprice }}</td>
-                <td>{{ product.link }}</td>
+                <td><a href="{{ product.link }}" target="_blank">{{ product.link }}</a></td>
                 </tr>
             {% endfor %}
         </table>
