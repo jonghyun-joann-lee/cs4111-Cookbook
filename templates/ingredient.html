@@ -31,8 +31,16 @@
                 <td>{{ product.companyname }}</td> 
                 <td>{{ product.productname }}</td>
                 <td>{{ product.regularprice }}</td>
-                <td>{{ product.saleprice }}</td>
-                <td>{{ product.primeprice }}</td>
+                {% if product.saleprice %}
+                    <td>{{ product.saleprice }}</td>
+                {% else %} <!-- If None, display it as N/A -->
+                    <td>N/A</td>
+                {% endif %}
+                {% if product.primeprice %}
+                    <td>{{ product.primeprice }}</td>
+                {% else %} <!-- If None, display it as N/A -->
+                    <td>N/A</td>
+                {% endif %}
                 <td><a href="{{ product.link }}" target="_blank">{{ product.link }}</a></td>
                 </tr>
             {% endfor %}
