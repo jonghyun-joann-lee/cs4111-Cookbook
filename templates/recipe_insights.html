@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - {{ recipe.recipename }}</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+  <h2>{{ recipe.recipename }}</h2>
+  <p>Category: 
+    {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
+        <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+
+  <p>Aggregated Rating: {{ recipe.aggregatedrating }}</p>
+
+  <hr>
+
+  <p>Submitted by {{ recipe.author }} on {{ recipe.datepublished }}</p> <!-- Need to add link to author's profile later-->
+  <p>"{{ recipe.description }}"</p>
+
+  <hr>
+
+  <p>Ready In: {{ recipe.totaltime }} (Preparation Time: {{ recipe.preptime }}, Cooking Time: {{ recipe.cooktime }})</p>
+  
+  <p>Servings: {{ recipe.servings }}</p>
+  <p>Calories: {{ recipe.calories }}</p>
+  <p>Sugar (grams): {{ recipe.sugar }}</p>
+
+  <hr>
+
+  <h3>Directions</h3>
+  <p>{{ recipe.instructions }}</p>
+
+  <h3>Ingredients</h3>
+
+  <hr>
+
+  <h3>Reviews ({{ recipe.reviewcount }})</h3>
+  {% for reviewnumber, review in reviews.items() %}
+    <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
+    <p>"{{ review.content }}"</p>
+    <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
+    <hr>
+  {% endfor %}
+
+
+  <h4><a href="/">Go to main page</a></h4>
+
+</body>
+
+</html>

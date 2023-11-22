@@ -111,22 +111,22 @@ Incorporated the given code into category_recipes.html but changed the variable 
 
 4. Asked how to check if it is the end of a list in HTML
 a. Prompt: 
-In HTML, I have a variable named recipe[2], which is a list of tuples. How do I check if it is the end of a list?  It not, I would like to add a comma right after the list item. If it is, I do not want to add a comma. Here are the lines of the HTML code that I wish to modify.
+In HTML, I have a variable named recipe.categories, which is a list of tuples. How do I check if it is the end of a list?  It not, I would like to add a comma right after the list item. If it is, I do not want to add a comma. Here are the lines of the HTML code that I wish to modify.
 
-        <td>
-            {% for category_name, category_id in recipe[2] %} <!-- recipe[2]=[(CategoryName, CategoryID)] -->
-            <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>
-            {% endfor %}
-        </td> 
+<td>
+  {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
+  <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>
+  {% endfor %}
+</td> 
   
 b. Response:
-To modify your HTML code to include a comma after each list item except the last one in the recipe[2] list, you can utilize Jinja2's loop control variables. Jinja2, which is often used in Flask applications, provides a loop.last variable that can be used to check if the current iteration is the last in the loop. You can conditionally add a comma based on this.
+To modify your HTML code to include a comma after each list item except the last one in the recipe.categories list, you can utilize Jinja2's loop control variables. Jinja2, which is often used in Flask applications, provides a loop.last variable that can be used to check if the current iteration is the last in the loop. You can conditionally add a comma based on this.
 
 Here's how you can modify your code snippet:
 <td>
-    {% for category_name, category_id in recipe[2] %}
-        <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %},{% endif %}
-    {% endfor %}
+  {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
+  <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
+  {% endfor %}
 </td>
 
 In this code:

@@ -25,7 +25,7 @@
   <h2>Top 5 Recipes</h2>
   <div>
     {% for recipe in recipes %}
-    <div>{{recipe[0]}} by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
+    <div><a href="/recipe/{{ recipe[3] }}">{{recipe[0]}}</a> by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
     {% endfor %}
   </div>
 
