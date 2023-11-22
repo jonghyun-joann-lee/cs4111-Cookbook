@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+    <title>GravanosCookBook - {{ ingredientname }}</title>
+</head>
+
+<body>
+    <h1>GravanosCookBook</h1>
+    <h2>{{ ingredientname }} available at Whole Foods Market</h2>
+
+    <table>
+        <tr>
+        <th>Product ID</th>
+        <th>Company Name</th>
+        <th>Product Name</th>
+        <th>Regular Price</th>
+        <th>Sale Price</th>
+        <th>Prime Price</th>
+        <th>Link</th>
+        </tr>
+
+        {% for product_id, product in products.items() %}
+            <tr>
+            <td>{{ product_id }}</td> 
+            <td>{{ product.companyname }}</td> 
+            <td>{{ product.productname }}</td>
+            <td>{{ product.regularprice }}</td>
+            <td>{{ product.saleprice }}</td>
+            <td>{{ product.primeprice }}</td>
+            <td>{{ product.link }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>

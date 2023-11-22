@@ -304,7 +304,6 @@ def recipe_insights(recipe_id):
   g.conn.commit()
   results = cursor.mappings().all()
 
-  # Process the result to handle multiple categories
   recipe_details = {}
   for result in results:
     if not recipe_details: # If this is the first row for this recipe
@@ -359,8 +358,64 @@ def recipe_insights(recipe_id):
 
   cursor.close()
 
-  context = {"recipe": recipe_details, "reviews": all_reviews}
+  # Get all required ingredients for the recipe
+  cursor = g.conn.execute(text("""
+                               SELECT I.IngredientID, I.IngredientName, U.ItemAmount
+                               FROM Recipes_written_by R, uses U, Ingredients I
+                               WHERE R.RecipeID = U.RecipeID
+                               AND U.IngredientID = I.IngredientID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_ingredients = {}
+  for result in results: # each row/result corresponds to one ingredient for the recipe
+    ingredientid = result["ingredientid"]
+    if ingredientid not in all_ingredients:
+      all_ingredients[ingredientid] = {
+        "ingredientname": result["ingredientname"],
+        "itemamount": result["itemamount"]
+      }
+
+  cursor.close()
+
+  context = {"recipe": recipe_details, "reviews": all_reviews, "ingredients": all_ingredients}
   return render_template("recipe_insights.html", **context)
+
+
+# If ingredient available at Whole Foods, show products info
+@app.route('/ingredient/<int:ingredient_id>')
+def ingredient(ingredient_id):
+  params_dict = {"ingredientid": ingredient_id}
+
+  cursor = g.conn.execute(text("""
+                                SELECT *
+                                FROM WholeFoodsProducts_linked_to W, Ingredients I
+                                WHERE W.IngredientID = I.IngredientID
+                                AND W.IngredientID = :ingredientid
+                                """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_products = {}
+  ingredient_name = ""
+  for result in results: # each row/result corresponds to one WholeFoods product for the ingredient
+    ingredient_name = result["ingredientname"]
+    productid = result["productid"]
+    all_products[productid] = {
+      "companyname": result["companyname"],
+      "productname": result["productname"],
+      "regularprice": result["regularprice"],
+      "saleprice": result["saleprice"],
+      "primeprice": result["primeprice"],
+      "link": result["link"]
+    }
+    
+  cursor.close()
+
+  context = {"ingredientname": ingredient_name, "products": all_products}
+  return render_template("ingredient.html", **context)
 
 
 # Example of adding new data to the database

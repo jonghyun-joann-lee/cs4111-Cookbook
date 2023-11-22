@@ -41,6 +41,9 @@
   <p>{{ recipe.instructions }}</p>
 
   <h3>Ingredients</h3>
+  {% for ingredient_id, ingredient in ingredients.items() %}
+    <p>{{ ingredient.itemamount }} <a href="{{ url_for('ingredient', ingredient_id=ingredient_id) }}">{{ ingredient.ingredientname }}</a></p>
+  {% endfor %}
 
   <hr>
 
