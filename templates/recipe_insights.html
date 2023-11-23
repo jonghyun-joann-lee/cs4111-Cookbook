@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - {{ recipe.recipename }}</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+  <h2>{{ recipe.recipename }}</h2>
+  <p>Category: 
+    {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
+        <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+
+  <p>Aggregated Rating: {{ recipe.aggregatedrating }}</p>
+
+  <hr>
+
+  <p>Submitted by {{ recipe.author }} on {{ recipe.datepublished }}</p> <!-- Need to add link to author's profile later-->
+  {% if recipe.description %}
+    <p>"{{ recipe.description }}"</p>
+  {% else %}
+  {% endif %}
+  <hr>
+
+  <p>Ready In: {{ recipe.totaltime }} (Preparation Time: {{ recipe.preptime }}, Cooking Time: {{ recipe.cooktime }})</p>
+  
+  
+  <p>Servings: 
+    {% if recipe.servings %}
+        {{ recipe.servings }}
+    {% else %}
+        N/A
+    {% endif %}
+  </p>
+  <p>Calories: 
+    {% if recipe.calories %}
+        {{ recipe.calories }}
+    {% else %}
+        N/A
+    {% endif %}
+    </p>
+  <p>Sugar (grams): 
+    {% if recipe.sugar %}
+        {{ recipe.sugar }}
+    {% else %}
+        N/A
+    {% endif %}
+    </p>
+
+  <hr>
+
+  <h3>Directions</h3>
+  {% if recipe.instructions %}
+    <p>"{{ recipe.instructions }}"</p>
+  {% else %}
+    <p>N/A</p>
+  {% endif %}
+
+  <h3>Ingredients</h3>
+  {% for ingredient_id, ingredient in ingredients.items() %}
+      <p>{{ ingredient.itemamount }}
+          {% if ingredient.wholefoods %} <!-- Add the link only when ingredient has associated Whole Foods products -->
+              <a href="{{ url_for('ingredient', ingredient_id=ingredient_id) }}">{{ ingredient.ingredientname }}</a>
+          {% else %}
+              {{ ingredient.ingredientname }}
+          {% endif %}
+      </p>
+  {% endfor %}
+
+  <hr>
+
+  <h3>Reviews ({{ recipe.reviewcount }})</h3>
+  {% for reviewnumber, review in reviews.items() %}
+    <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
+    <p>"{{ review.content }}"</p>
+    <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
+    <hr>
+  {% endfor %}
+
+
+  <h4><a href="/">Go to main page</a></h4>
+
+</body>
+
+</html>

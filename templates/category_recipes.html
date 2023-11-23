@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - {{name}}</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+  <h2>{{name}} Recipes</h2>
+  {% if recipes %}
+    <table>
+        <tr>
+        <th>Recipe Name</th>
+        <th>Author</th>
+        <th>Total Time</th>
+        <th>Aggregated Rating</th>
+        <th>Calories</th>
+        <th>Sugar (grams)</th>
+        </tr>
+    
+        {% for recipe in recipes %}
+        <tr>
+        <td><a href="/recipe/{{ recipe[6] }}">{{ recipe[0] }}</a></td> <!-- recipe[0]=RecipeName, recipe[6]=RecipeID -->
+        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td>{{ recipe[2] }}</td> <!-- Total Time -->
+        <td>{{ recipe[3] }}</td> <!-- Aggregated Rating -->
+        <td>
+            {% if recipe[4] %}
+                {{ recipe[4] }} <!-- Calories -->
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if recipe[5] %}
+                {{ recipe[5] }} <!-- Sugar (grams) -->
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        </tr>
+        {% endfor %}
+    </table>
+  {% else %}
+    <p>There are no recipes added to this category yet.</p>
+  {% endif %}
+  
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>

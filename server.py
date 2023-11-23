@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
 """
 Columbia's COMS W4111.001 Introduction to Databases
 Example Webserver
@@ -28,8 +31,14 @@ app = Flask(__name__, template_folder=tmpl_dir)
 # For example, if you had username gravano and password foobar, then the following line would be:
 #
 #     DATABASEURI = "postgresql://gravano:foobar@34.75.94.195/proj1part2"
+<<<<<<< HEAD
 #
 DATABASEURI = "postgresql://user:password@34.75.94.195/proj1part2"
+=======
+#     New server: 34.74.171.121
+#
+DATABASEURI = "postgresql://jl6509:6509@34.74.171.121/proj1part2"
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
 
 
 #
@@ -109,10 +118,17 @@ def index():
 
   """
 
+<<<<<<< HEAD
   # DEBUG: this is debugging code to see what request looks like
   print(request.args)
 
 
+=======
+  """
+  # DEBUG: this is debugging code to see what request looks like
+  print(request.args)
+
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
   #
   # example of a database query 
   #
@@ -132,6 +148,33 @@ def index():
   for result in results:
     names.append(result["name"])
   cursor.close()
+<<<<<<< HEAD
+=======
+  """
+
+  # Query to get all categories
+  cursor = g.conn.execute(text("""SELECT CategoryID, CategoryName FROM Categories"""))
+  g.conn.commit()
+  all_categories = [] # a list of tuples
+  results = cursor.mappings().all()
+  for result in results:
+    all_categories.append((result["categoryid"], result["categoryname"]))
+  cursor.close()
+
+  # Query to get top 5 recipes with the highest aggregated rating
+  # (if there is a tie, then choose based on lower RecipeID)
+  cursor = g.conn.execute(text("""SELECT R.RecipeName, P.DisplayName, R.AggregatedRating, R.RecipeID
+                               FROM Recipes_written_by R, Authors A, People P
+                               WHERE R.UserID = A.UserID AND A.UserID = P.UserID
+                               ORDER BY R.AggregatedRating DESC, R.RecipeID ASC
+                               LIMIT 5"""))
+  g.conn.commit()
+  top_5_recipes = [] # a list of tuples
+  results = cursor.mappings().all()
+  for result in results:
+    top_5_recipes.append((result["recipename"], result["displayname"], result["aggregatedrating"], result["recipeid"]))
+  cursor.close()
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -159,8 +202,14 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
+<<<<<<< HEAD
   context = dict(data = names)
 
+=======
+  # context = dict(data = names)
+
+  context = dict(categories=all_categories, recipes=top_5_recipes)
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
 
   #
   # render_template looks in the templates/ folder for files.
@@ -176,9 +225,302 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
+<<<<<<< HEAD
 @app.route('/another')
 def another():
   return render_template("another.html")
+=======
+
+
+# Helper function to convert time into ~ hr ~ min format
+def convert_time(time):
+  hours = int(time // 60)
+  mins = int(time % 60)
+  if hours > 0:
+    formatted_time = f"{hours} hr {mins} min"
+  else:
+    formatted_time = f"{mins} min"
+
+  return formatted_time
+
+
+# A page for each category showing a list of all recipes in the category
+@app.route('/category/<int:category_id>')
+def category(category_id):
+  params_dict = {"categoryid": category_id}
+  # Get all the recipes that belong to the given category_id
+  cursor = g.conn.execute(text("""
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               AND C.CategoryID = :categoryid
+                               """), params_dict)
+  g.conn.commit()
+  recipes_in_category = [] # a list of tuples 
+  results = cursor.mappings().all()
+  for result in results:
+    formatted_time = convert_time(result["totaltime"])
+    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"]))
+  cursor.close()
+
+  # Get the name of the category with the given category_id
+  # Need to run this query separately because some categories do not have any recipes in it, thus not showing up in belongs_to
+  cursor = g.conn.execute(text("""SELECT C.CategoryName FROM Categories C WHERE C.CategoryID = :categoryid"""), params_dict)
+  g.conn.commit()
+  category_name = ""
+  for result in cursor:
+    category_name = result[0]
+  cursor.close()
+
+  context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
+  return render_template("category_recipes.html", **context)
+
+
+# A page that shows a list of all recipes
+@app.route('/recipes')
+def recipes():
+  # Get all recipes from the database
+  # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
+  cursor = g.conn.execute(text("""
+                               SELECT R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               """))
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  # Process the result so that we (intuitionally) have only one row for one recipe (handle multiple categories)
+  all_recipes = {} # This is going to be a nested dictionary
+  for result in results:
+    recipe_id = result["recipeid"]
+    if recipe_id not in all_recipes: # If it is the first row for a recipe
+      # First, convert total time into ~ hr ~ min
+      formatted_time = convert_time(result["totaltime"])
+
+      all_recipes[recipe_id] = {
+        "recipename": result["recipename"],
+        "displayname": result["displayname"],
+        "categories": [(result["categoryname"], result["categoryid"])],
+        "totaltime": formatted_time, 
+        "aggregatedrating": result["aggregatedrating"], 
+        "calories": result["calories"], 
+        "sugar": result["sugar"]
+        }
+    else: # if recipe_id is already in all_recipes (i.e., if recipe belongs to more than one category)
+      all_recipes[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+  
+  cursor.close()
+  
+  context = {"recipes": all_recipes}
+  return render_template("all_recipes.html", **context)
+
+
+# Recipe Insights (View all details of a recipe, reviews, and required ingredients)
+@app.route('/recipe/<int:recipe_id>')
+def recipe_insights(recipe_id):
+  params_dict = {"recipeid": recipe_id}
+  # Get all details of the recipe, categories that it belongs to, and the author's name
+  # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
+  cursor = g.conn.execute(text("""
+                               SELECT R.*, P.DisplayName, C.CategoryName, C.CategoryID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  recipe_details = {}
+  for result in results:
+    if not recipe_details: # If this is the first row for this recipe
+      # First, convert all time into ~ hr ~ min
+      formatted_cooktime = convert_time(result["cooktime"])
+      formatted_preptime = convert_time(result["preptime"])
+      formatted_totaltime = convert_time(result["totaltime"])
+
+      recipe_details = {
+        "recipename": result["recipename"],
+        "cooktime": formatted_cooktime,
+        "preptime": formatted_preptime,
+        "totaltime": formatted_totaltime, 
+        "description": result["description"],
+        "instructions": result["instructions"],
+        "aggregatedrating": result["aggregatedrating"], 
+        "reviewcount": result["reviewcount"],
+        "servings": result["servings"],
+        "calories": result["calories"], 
+        "sugar": result["sugar"],
+        "datepublished": result["datepublished"],
+        "author": result["displayname"],
+        "categories": [(result["categoryname"], result["categoryid"])]
+        }
+    else: # if not the first row (i.e., if recipe belongs to more than one category)
+      recipe_details["categories"].append((result["categoryname"], result["categoryid"]))
+  
+  cursor.close()
+
+  # Get all reviews of the recipe with all details of each review and the user's name
+  cursor = g.conn.execute(text("""
+                               SELECT V.*, P.DisplayName
+                               FROM Recipes_written_by R, Reviews_created_by_evaluates V, Users U, People P
+                               WHERE R.RecipeID = V.RecipeID
+                               AND V.UserID = U.UserID AND U.UserID = P.UserID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_reviews = {}
+  for result in results: # each row/result corresponds to one review for the recipe
+    reviewnumber = result["reviewnumber"]
+    if reviewnumber not in all_reviews:
+      all_reviews[reviewnumber] = {
+        "rating": result["rating"],
+        "content": result["content"],
+        "datesubmitted": result["datesubmitted"],
+        "datemodified": result["datemodified"],
+        "author": result["displayname"]
+      }
+
+  cursor.close()
+
+  # Get all required ingredients for the recipe
+  cursor = g.conn.execute(text("""
+                               SELECT I.IngredientID, I.IngredientName, U.ItemAmount
+                               FROM Recipes_written_by R, uses U, Ingredients I
+                               WHERE R.RecipeID = U.RecipeID
+                               AND U.IngredientID = I.IngredientID
+                               AND R.RecipeID = :recipeid
+                               """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_ingredients = {}
+  for result in results: # each row/result corresponds to one ingredient for the recipe
+    ingredientid = result["ingredientid"]
+    if ingredientid not in all_ingredients:
+      # Nested query to check if there are Whole Foods products associated with this ingredient
+      # If so, link the ingredient page to the ingredient name; If not, do not link
+      params_dict2 = {"ingredientid": ingredientid}
+      cursor2 = g.conn.execute(text("""
+                                   SELECT COUNT(*)
+                                   FROM WholeFoodsProducts_linked_to W
+                                   WHERE W.IngredientID = :ingredientid
+                                   """), params_dict2)
+      g.conn.commit()
+      has_whole_foods = False # True if there are associated Whole Foods products
+      for result2 in cursor2:
+        if result2[0] > 0: has_whole_foods = True
+      cursor2.close()
+
+      all_ingredients[ingredientid] = {
+        "ingredientname": result["ingredientname"],
+        "itemamount": result["itemamount"],
+        "wholefoods": has_whole_foods
+      }
+
+  cursor.close()
+
+  context = {"recipe": recipe_details, "reviews": all_reviews, "ingredients": all_ingredients}
+  return render_template("recipe_insights.html", **context)
+
+
+# If ingredient available at Whole Foods, show products info
+@app.route('/ingredient/<int:ingredient_id>')
+def ingredient(ingredient_id):
+  params_dict = {"ingredientid": ingredient_id}
+
+  cursor = g.conn.execute(text("""
+                                SELECT *
+                                FROM WholeFoodsProducts_linked_to W, Ingredients I
+                                WHERE W.IngredientID = I.IngredientID
+                                AND W.IngredientID = :ingredientid
+                                """), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  all_products = {}
+  ingredient_name = ""
+  for result in results: # each row/result corresponds to one WholeFoods product for the ingredient
+    ingredient_name = result["ingredientname"]
+    productid = result["productid"]
+    all_products[productid] = {
+      "companyname": result["companyname"],
+      "productname": result["productname"],
+      "regularprice": result["regularprice"],
+      "saleprice": result["saleprice"],
+      "primeprice": result["primeprice"],
+      "link": result["link"]
+    }
+
+  cursor.close()
+
+  context = {"ingredientname": ingredient_name, "products": all_products}
+  return render_template("ingredient.html", **context)
+
+
+# Allow users to search by recipe name or author's name
+@app.route('/search_results')
+def search_results():
+    search_type = request.args.get('search_type')
+    query = request.args.get('query')
+
+    if not query:
+        return "Please enter a search term.", 400
+
+    if search_type == 'name':
+        # Search for recipe name, doesn't have to type in exact name and case-insensitive
+        # e.g. if search for "salmon", result will contain recipes that have "salmon" in their name
+        search_term = f"%{query}%"
+        sql_query = text("""
+                         SELECT *
+                         FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                         WHERE R.RecipeName ILIKE :searchterm
+                         AND R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                         AND R.UserID = A.UserID AND A.UserID = P.UserID
+                         """)
+    elif search_type == 'author':
+        # Search for author's name, doesn't have to type in exact name and case-insensitive
+        search_term = f"%{query}%"
+        sql_query = text("""
+                         SELECT *
+                         FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                         WHERE P.DisplayName ILIKE :searchterm
+                         AND P.UserID = A.UserID AND A.UserID = R.UserID
+                         AND R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                         """)
+
+    cursor = g.conn.execute(sql_query, {"searchterm": search_term})
+    g.conn.commit()
+    results = cursor.mappings().all()
+
+    query_results = {}
+    for result in results:
+      recipe_id = result["recipeid"]
+      if recipe_id not in query_results: # If it is the first row for a recipe
+        # First, convert total time into ~ hr ~ min
+        formatted_time = convert_time(result["totaltime"])
+
+        query_results[recipe_id] = {
+          "recipename": result["recipename"],
+          "displayname": result["displayname"],
+          "categories": [(result["categoryname"], result["categoryid"])],
+          "totaltime": formatted_time, 
+          "aggregatedrating": result["aggregatedrating"], 
+          "calories": result["calories"], 
+          "sugar": result["sugar"]
+          }
+      else: # if recipe_id is already in query_results (i.e., if recipe belongs to more than one category)
+        query_results[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+    
+    cursor.close()
+
+    context = {"recipes": query_results}
+    return render_template("search_results.html", **context)
+>>>>>>> df838616110b8027e0b6f55c0205862ceda1a05f
 
 
 # Example of adding new data to the database
