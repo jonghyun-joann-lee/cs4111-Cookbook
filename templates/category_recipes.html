@@ -31,8 +31,20 @@
         <td>{{ recipe[1] }}</td> <!-- Author -->
         <td>{{ recipe[2] }}</td> <!-- Total Time -->
         <td>{{ recipe[3] }}</td> <!-- Aggregated Rating -->
-        <td>{{ recipe[4] }}</td> <!-- Calories -->
-        <td>{{ recipe[5] }}</td> <!-- Sugar (grams) -->
+        <td>
+            {% if recipe[4] %}
+                {{ recipe[4] }} <!-- Calories -->
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if recipe[5] %}
+                {{ recipe[5] }} <!-- Sugar (grams) -->
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
         </tr>
         {% endfor %}
     </table>

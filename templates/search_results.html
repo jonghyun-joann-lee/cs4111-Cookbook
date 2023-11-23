@@ -37,8 +37,20 @@
         </td>
         <td>{{ recipe.totaltime }}</td>
         <td>{{ recipe.aggregatedrating }}</td>
-        <td>{{ recipe.calories }}</td>
-        <td>{{ recipe.sugar }}</td>
+        <td>
+            {% if recipe.calories %}
+                {{ recipe.calories }}
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if recipe.sugar %}
+                {{ recipe.sugar }}
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
         </tr>
         {% endfor %}
     </table>

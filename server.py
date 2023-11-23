@@ -443,7 +443,7 @@ def search_results():
         return "Please enter a search term.", 400
 
     if search_type == 'name':
-        # For recipe name, doesn't have to type in exact name and case-insensitive
+        # Search for recipe name, doesn't have to type in exact name and case-insensitive
         # e.g. if search for "salmon", result will contain recipes that have "salmon" in their name
         search_term = f"%{query}%"
         sql_query = text("""
@@ -454,17 +454,15 @@ def search_results():
                          AND R.UserID = A.UserID AND A.UserID = P.UserID
                          """)
     elif search_type == 'author':
-        # For author's name, must type in exact name and case-sensitive
-        search_term = f"{query}"
+        # Search for author's name, doesn't have to type in exact name and case-insensitive
+        search_term = f"%{query}%"
         sql_query = text("""
                          SELECT *
                          FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
-                         WHERE P.DisplayName LIKE :searchterm
+                         WHERE P.DisplayName ILIKE :searchterm
                          AND P.UserID = A.UserID AND A.UserID = R.UserID
                          AND R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                          """)
-    else:
-        return "Invalid search type.", 400
 
     cursor = g.conn.execute(sql_query, {"searchterm": search_term})
     g.conn.commit()
