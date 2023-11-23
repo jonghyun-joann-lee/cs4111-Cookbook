@@ -137,3 +137,73 @@ Remember that this solution assumes you are using Jinja2 templating with Flask o
 c. Usage:
 Incorporated the given code by ChatGPT into all_recipes.html
 
+
+5. Asked how to add search function in HTML with a dropdown box, text input box, and a search button
+a. Prompt: 
+I want to add a search functionality in my existing html page. For the design, I want something like "Search for a recipe: " and then a dropdown box that allows users to choose either name or author to search for and then a text input box and then a search button. I am using Flask application and Jinja2 template.
+
+b. Response: 
+To add a search functionality with the specified design to your existing HTML page in a Flask application using Jinja2 templates, you'll need to modify both your HTML (with Jinja2 syntax) and your Flask backend. Here's a step-by-step guide to achieve this:
+
+1. HTML Template with Jinja2
+You'll need to create a form in your HTML template that includes a dropdown box, a text input box, and a search button. Here's an example of how you could structure it:
+
+<form action="{{ url_for('search_results') }}" method="get">
+  <label for="search-for">Search for a recipe:</label>
+  <select name="search_type" id="search-type">
+    <option value="name">Name</option>
+    <option value="author">Author</option>
+  </select>
+  <input type="text" name="query" required>
+  <button type="submit">Search</button>
+</form>
+
+2. Flask Backend
+In your Flask application, you'll need to handle the search. This function will take the query parameters, perform the search, and return the results.
+
+@app.route('/search_results')
+def search_results():
+    search_type = request.args.get('search_type')
+    query = request.args.get('query')
+
+    # Implement your search logic here
+    # For example, query your database based on search_type and query
+
+    results = perform_search(search_type, search_query) # This is a placeholder function
+
+    return render_template('search_results.html', results=results)
+
+def perform_search(search_type, query):
+    # Implement your search logic here
+    # This function should return the search results based on the type and query
+    pass
+
+3. Search Results Template
+Create a new Jinja2 template (e.g., search_results.html) to display the search results. 
+
+<!-- search_results.html -->
+{% extends 'base.html' %} <!-- or your base template -->
+
+{% block content %}
+    <h2>Search Results</h2>
+    {% for result in results %}
+        <!-- Display each result, e.g., result.name, result.author -->
+    {% endfor %}
+{% endblock %}
+
+4. Styling and JavaScript (Optional)
+You can add CSS to style your form and use JavaScript to enhance the user experience, such as adding real-time search suggestions.
+
+5. Database Integration
+The perform_search function in your Flask app should contain the logic to query your database based on the search_type and search_query. This implementation depends on your database structure and the ORM (if any) you're using.
+
+6. Testing
+Once everything is set up, test the functionality thoroughly to ensure that the search works as expected and the results are displayed correctly.
+
+This setup gives you a basic search functionality. Depending on your application's requirements, you might need to add more complex features like pagination, advanced search filters, or full-text search capabilities.
+
+c. Usage: 
+For creating the dropbox, search box, and search button, copied the provided code by ChatGPT into index.html
+For creating route function in python, referred to ChatGPT on how to access the user's input (e.g. request.args.get('search_type')), but implemented the search logic and processing of the results by myself.
+For search_results.html, did not refer to ChatGPT's response. I used the same table style in all_recipes.html that I previously wrote.
+

@@ -284,7 +284,7 @@ def recipes():
   
   cursor.close()
   
-  context = dict(recipes=all_recipes)
+  context = {"recipes": all_recipes}
   return render_template("all_recipes.html", **context)
 
 
@@ -375,12 +375,12 @@ def recipe_insights(recipe_id):
     if ingredientid not in all_ingredients:
       # Nested query to check if there are Whole Foods products associated with this ingredient
       # If so, link the ingredient page to the ingredient name; If not, do not link
-      params_dict = {"ingredientid": ingredientid}
+      params_dict2 = {"ingredientid": ingredientid}
       cursor2 = g.conn.execute(text("""
                                    SELECT COUNT(*)
                                    FROM WholeFoodsProducts_linked_to W
                                    WHERE W.IngredientID = :ingredientid
-                                   """), params_dict)
+                                   """), params_dict2)
       g.conn.commit()
       has_whole_foods = False # True if there are associated Whole Foods products
       for result2 in cursor2:
@@ -431,6 +431,68 @@ def ingredient(ingredient_id):
 
   context = {"ingredientname": ingredient_name, "products": all_products}
   return render_template("ingredient.html", **context)
+
+
+# Allow users to search by recipe name or author's name
+@app.route('/search_results')
+def search_results():
+    search_type = request.args.get('search_type')
+    query = request.args.get('query')
+
+    if not query:
+        return "Please enter a search term.", 400
+
+    if search_type == 'name':
+        # For recipe name, doesn't have to type in exact name and case-insensitive
+        # e.g. if search for "salmon", result will contain recipes that have "salmon" in their name
+        search_term = f"%{query}%"
+        sql_query = text("""
+                         SELECT *
+                         FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                         WHERE R.RecipeName ILIKE :searchterm
+                         AND R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                         AND R.UserID = A.UserID AND A.UserID = P.UserID
+                         """)
+    elif search_type == 'author':
+        # For author's name, must type in exact name and case-sensitive
+        search_term = f"{query}"
+        sql_query = text("""
+                         SELECT *
+                         FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+                         WHERE P.DisplayName LIKE :searchterm
+                         AND P.UserID = A.UserID AND A.UserID = R.UserID
+                         AND R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                         """)
+    else:
+        return "Invalid search type.", 400
+
+    cursor = g.conn.execute(sql_query, {"searchterm": search_term})
+    g.conn.commit()
+    results = cursor.mappings().all()
+
+    query_results = {}
+    for result in results:
+      recipe_id = result["recipeid"]
+      if recipe_id not in query_results: # If it is the first row for a recipe
+        # First, convert total time into ~ hr ~ min
+        formatted_time = convert_time(result["totaltime"])
+
+        query_results[recipe_id] = {
+          "recipename": result["recipename"],
+          "displayname": result["displayname"],
+          "categories": [(result["categoryname"], result["categoryid"])],
+          "totaltime": formatted_time, 
+          "aggregatedrating": result["aggregatedrating"], 
+          "calories": result["calories"], 
+          "sugar": result["sugar"]
+          }
+      else: # if recipe_id is already in query_results (i.e., if recipe belongs to more than one category)
+        query_results[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+    
+    cursor.close()
+
+    context = {"recipes": query_results}
+    return render_template("search_results.html", **context)
 
 
 # Example of adding new data to the database

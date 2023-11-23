@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Search Results</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+  <h2>Search Results</h2>
+  {% if recipes %}
+    <table>
+        <tr>
+        <th>Recipe Name</th>
+        <th>Author</th>
+        <th>Category</th>
+        <th>Total Time</th>
+        <th>Aggregated Rating</th>
+        <th>Calories</th>
+        <th>Sugar (grams)</th>
+        </tr>
+    
+        {% for recipe_id, recipe in recipes.items() %}
+        <tr>
+        <td><a href="/recipe/{{ recipe_id }}">{{ recipe.recipename }}</a></td> 
+        <td>{{ recipe.displayname }}</td> 
+        <td>
+            {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
+              <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </td>
+        <td>{{ recipe.totaltime }}</td>
+        <td>{{ recipe.aggregatedrating }}</td>
+        <td>{{ recipe.calories }}</td>
+        <td>{{ recipe.sugar }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+  {% else %}
+    <p>No matching results found.</p>
+  {% endif %}
+  
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>
