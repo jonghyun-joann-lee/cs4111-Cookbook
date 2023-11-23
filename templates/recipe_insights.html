@@ -25,20 +25,45 @@
   <hr>
 
   <p>Submitted by {{ recipe.author }} on {{ recipe.datepublished }}</p> <!-- Need to add link to author's profile later-->
-  <p>"{{ recipe.description }}"</p>
-
+  {% if recipe.description %}
+    <p>"{{ recipe.description }}"</p>
+  {% else %}
+  {% endif %}
   <hr>
 
   <p>Ready In: {{ recipe.totaltime }} (Preparation Time: {{ recipe.preptime }}, Cooking Time: {{ recipe.cooktime }})</p>
   
-  <p>Servings: {{ recipe.servings }}</p>
-  <p>Calories: {{ recipe.calories }}</p>
-  <p>Sugar (grams): {{ recipe.sugar }}</p>
+  
+  <p>Servings: 
+    {% if recipe.servings %}
+        {{ recipe.servings }}
+    {% else %}
+        N/A
+    {% endif %}
+  </p>
+  <p>Calories: 
+    {% if recipe.calories %}
+        {{ recipe.calories }}
+    {% else %}
+        N/A
+    {% endif %}
+    </p>
+  <p>Sugar (grams): 
+    {% if recipe.sugar %}
+        {{ recipe.sugar }}
+    {% else %}
+        N/A
+    {% endif %}
+    </p>
 
   <hr>
 
   <h3>Directions</h3>
-  <p>{{ recipe.instructions }}</p>
+  {% if recipe.instructions %}
+    <p>"{{ recipe.instructions }}"</p>
+  {% else %}
+    <p>N/A</p>
+  {% endif %}
 
   <h3>Ingredients</h3>
   {% for ingredient_id, ingredient in ingredients.items() %}
