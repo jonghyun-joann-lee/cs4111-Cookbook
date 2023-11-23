@@ -15,7 +15,8 @@
   <h1>Welcome to GravanosCookBook</h1>
   <p>An all-in-one culinary experience for cooking enthusiasts like you!</p>
 
-  <h2>Search Recipe</h2>
+  <hr>
+  
   <form action="{{ url_for('search_results') }}" method="get">
     <label for="search-for">Search for a recipe:</label>
     <select name="search_type" id="search-type">
@@ -40,10 +41,7 @@
     {% endfor %}
   </div>
 
-  <h2>All Recipes</h2>
-  <p><a href="recipes">View all recipes</a></p>
-
-
+  <h2><a href="recipes">All recipes</a></h2>
 
 </body>
 
