@@ -16,7 +16,7 @@ from flask import Flask, request, render_template, g, redirect, Response, abort,
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-app.secret_key = 'some_key' # Required to set secret key to use session
+app.secret_key = 'J6v6QwEB6fpG' # Random password; required to set secret key to use session
 
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
