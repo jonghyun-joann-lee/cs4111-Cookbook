@@ -11,7 +11,7 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, session
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for
 from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -373,6 +373,7 @@ def recipe_insights(recipe_id):
                                WHERE R.RecipeID = V.RecipeID
                                AND V.UserID = U.UserID AND U.UserID = P.UserID
                                AND R.RecipeID = :recipeid
+                               ORDER BY V.DateSubmitted ASC
                                """), params_dict)
   g.conn.commit()
   results = cursor.mappings().all()
@@ -582,8 +583,9 @@ def submit_review(recipe_id):
     g.conn.execute(text("""UPDATE Users
                         SET ReviewsWritten = :reviewswritten
                         WHERE UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
+    g.conn.commit()
 
-    return redirect('/recipe/<int:recipe_id>', recipe_id=recipe_id)
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
 
   # If GET request, direct to review submission page
   cursor = g.conn.execute(text("""SELECT R.RecipeName 
