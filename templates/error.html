@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Error </title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <h2>Error</h2>
+
+  <p>{{ message }}</p>
+
+  <h4><a href="#" onclick="goBack()">Go to previous page</a></h4>
+  
+  <script>
+  function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location.href = '/'; 
+    }
+    }
+  </script>
+
+</body>
+
+</html>

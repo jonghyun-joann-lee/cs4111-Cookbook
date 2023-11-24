@@ -530,7 +530,8 @@ def search_results():
 def submit_review(recipe_id):
   user_id = session.get('user_id') # Get the current user's ID
   if not user_id: # If no user selected
-    return "You must select a user to submit a review.", 403
+    message = "You must select a user to submit a review."
+    return render_template("error.html", message=message)
   
   if request.method == 'POST':
     rating = request.form.get('rating')
