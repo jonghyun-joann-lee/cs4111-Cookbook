@@ -36,7 +36,18 @@
     <button type="submit" style="font-size: 16px; padding: 10px 20px;">Update Review</button>
   </form>
 
-  <h4><a href="/">Go to main page</a></h4>
+  <!-- Option to go back -->
+  <h4><a href="#" onclick="goBack()">Go to previous page</a></h4>
+  
+  <script>
+  function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location.href = '/'; 
+    }
+    }
+  </script>
 
 </body>
 
