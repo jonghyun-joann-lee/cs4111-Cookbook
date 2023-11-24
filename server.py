@@ -108,8 +108,8 @@ def inject_user():
 @app.route('/set_user', methods=['POST'])
 def set_user():
   session['user_id'] = request.form['user_id']
-  # After setting the user, redirect to the main page
-  return redirect('/')
+  # After setting the user, redirect to the previous page if it exists or else, the main page
+  return redirect(request.referrer or '/')
 
 #
 # @app.route is a decorator around index() that means:
