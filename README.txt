@@ -396,6 +396,73 @@ Remember that if you use the second approach, you need to ensure that your datab
 Choose the method that best fits your application's design and structure.
 
 c. Usage:
-Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error.
-So implemented the second way of using engine.connect() as conn.
+Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error. So implemented the second way of using engine.connect() as conn.
 
+
+8. Asked how to create a page for submitting review with rating, review content, and submit button
+a. Prompt:
+In HTML, using Jinja2 template and Flask, I am trying to create a page for submitting a new review. I would like the user to input the rating which should be an integer between a minimum value of 1 and maximum value of 5. The user may or may not input content for the review, but there should be a text box for it. Then there would be a submit button saying "Submit Review". I then need to collect the timestamp for the submission date in a format similar to "2008-02-13 0:26:49". How can I write this code in HTML?
+
+b. Response:
+Creating a review submission page using Jinja2 templating in a Flask application involves several steps. You'll need to create an HTML form for the user inputs, including a numeric input for the rating, a text area for the review content, and a submit button. Additionally, you'll handle the timestamp on the server-side when the form is submitted.
+
+Here's a basic example of how you might structure your HTML template using Jinja2:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Review</title>
+</head>
+<body>
+    <form action="/submit_review" method="post">
+        <label for="rating">Rating (1-5):</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" required>
+
+        <label for="reviewContent">Review:</label>
+        <textarea id="reviewContent" name="reviewContent"></textarea>
+
+        <button type="submit">Submit Review</button>
+    </form>
+</body>
+</html>
+
+In this template:
+
+The <form> tag has an action attribute pointing to /submit_review, which is the URL where your Flask app will handle the form submission.
+The <input type="number"> field allows users to enter a numeric rating between 1 and 5.
+The <textarea> field is for the review content. It's optional since you mentioned that the user might not input content.
+The <button type="submit"> is the button to submit the form.
+On the Flask side, you'll handle the form submission and capture the timestamp. Here's a basic example of what the Flask route might look like:
+
+from flask import Flask, request, render_template
+from datetime import datetime
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('review_form.html')
+
+@app.route('/submit_review', methods=['POST'])
+def submit_review():
+    rating = request.form.get('rating')
+    review_content = request.form.get('reviewContent')
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Here, you can save the rating, review_content, and timestamp to a database or process them as needed
+
+    return f"Review submitted with rating: {rating}, content: {review_content}, on: {timestamp}"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+In this Python script:
+
+The index route renders the review form template.
+The submit_review route handles the POST request from the form. It captures the rating and review content from the form data, and it generates the current timestamp in the specified format.
+Make sure you have Flask installed in your environment, and the template file should be named review_form.html and placed in the templates directory of your Flask project.
+
+c. Usage:
+Directly copied the HTML code provided by ChatGPT with minor change in variable name, and only copied the "timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")" line into the python code.

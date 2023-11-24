@@ -100,6 +100,7 @@
   <hr>
 
   <h3>Reviews ({{ recipe.reviewcount }})</h3>
+  <h5><a href="{{ url_for('submit_review', recipe_id=recipe.recipeid) }}">Write a review</a></h5>
   {% for reviewnumber, review in reviews.items() %}
     <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
     <p>"{{ review.content }}"</p>
