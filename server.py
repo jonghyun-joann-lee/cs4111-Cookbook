@@ -11,11 +11,10 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort
+from flask import Flask, request, render_template, g, redirect, Response, abort, session
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
-
 
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
@@ -30,7 +29,6 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #     New server: 34.74.171.121
 #
 DATABASEURI = "postgresql://jl6509:6509@34.74.171.121/proj1part2"
-
 
 #
 # This line creates a database engine that knows how to connect to the URI above.
@@ -82,6 +80,37 @@ def teardown_request(exception):
   except Exception as e:
     pass
 
+
+# Get all users with their id and displayname for displaying a dropdown menu for user selection
+def all_users():
+  cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+  g.conn.commit()
+  results = cursor.mappings().all()
+  users = {}
+  for result in results:
+    userid = result["userid"]
+    if userid not in users:
+      users[userid] = {
+        "displayname": result["displayname"]
+      }
+  cursor.close()
+
+  return users
+
+# A global variable that stores the dictionary of all users
+users = all_users()
+
+# Pass the users dictionary to all templates
+@app.context_processor
+def inject_user():
+  return {"users": users}
+
+# Set user for current session based on the user_id selected from the dropdown menu
+@app.route('/set_user', methods=['POST'])
+def set_user():
+  session['user_id'] = request.form['user_id']
+  # After setting the user, redirect to the main page
+  return redirect('/')
 
 #
 # @app.route is a decorator around index() that means:
@@ -444,7 +473,7 @@ def search_results():
 
     if search_type == 'name':
         # Search for recipe name, doesn't have to type in exact name and case-insensitive
-        # e.g. if search for "salmon", result will contain recipes that have "salmon" in their name
+        # e.g. if search for "carrot", result will contain recipes that have "carrot" in their name
         search_term = f"%{query}%"
         sql_query = text("""
                          SELECT *
@@ -491,6 +520,12 @@ def search_results():
 
     context = {"recipes": query_results}
     return render_template("search_results.html", **context)
+
+
+# Set the current user for the session
+@app.route('/set_user', methods=['POST'])
+def set_user():
+
 
 
 # Example of adding new data to the database

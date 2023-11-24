@@ -207,3 +207,39 @@ For creating the dropbox, search box, and search button, copied the provided cod
 For creating route function in python, referred to ChatGPT on how to access the user's input (e.g. request.args.get('search_type')), but implemented the search logic and processing of the results by myself.
 For search_results.html, did not refer to ChatGPT's response. I used the same table style in all_recipes.html that I previously wrote.
 
+6. Aksed how to create a dropdown menu that lists all users and allow to choose one in HTML
+a. Prompt: 
+Please write in HTML for displaying a dropdown menu that allows to choose a user based on displayname (with a loop that goes around for all users) and store the user_id for the session. I'm using Flask and Jinja2 template. 
+
+b. Response:
+1. User Dropdown on Each Page:
+You could add a dropdown menu to your website's layout that lists all users. When a selection is made, the chosen user ID is stored in the session. This allows you to "simulate" different users interacting with the application without a login system.
+
+<!-- Place this in a base template that other templates extend -->
+<form action="{{ url_for('set_user') }}" method="post">
+    <select name="user_id" onchange="this.form.submit()">
+        {% for user in users %}
+            <option value="{{ user.UserID }}">{{ user.DisplayName }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+2. Route to Set the Current User:
+
+@app.route('/set_user', methods=['POST'])
+def set_user():
+    session['user_id'] = request.form['user_id']
+    return redirect(request.referrer or url_for('index'))
+This route sets the selected user ID into the session and then redirects back to the page the user was on, or to the index if the referrer is not available.
+
+3. Using the Current User ID:
+When you need to perform actions like submitting reviews or recipes, you would use session['user_id'] to get the currently selected user's ID.
+
+For displaying the dropdown, make sure to fetch the list of users from the database and pass it to your base template. If you're using template inheritance, you can make this dropdown part of your base layout so it's available on every page.
+
+c. Usage: 
+Integrated the provided HTML code by ChatGPT into all HTML templates to allow selecting who the current user is. This was to mimic the user login system and show different functionalities based on who the current user is. Any user can write new reviews or recipes, but the current user can modify or delete only its review or recipe.
+Made a minor tweak to reflect the variables that I pass onto the tempaltes.
+Also, referred to the response by ChatGPT on how to create a route function in python that uses the input submitted by the user (the selected user displayname).
+Also, made a minor tweak here to redirect users to the index page.
+Plus, searched on Google how to use the Flask's session object and pass on context to every template using @app.context_processor.
