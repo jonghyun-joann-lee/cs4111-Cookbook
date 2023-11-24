@@ -619,7 +619,7 @@ def edit_review(recipe_id, review_number):
   results = cursor.mappings().all()
   cursor.close()
 
-  if results is None:
+  if not results:
     message = "The review does not exist."
     return render_template("error.html", message=message)
   
@@ -688,7 +688,7 @@ def delete_review(recipe_id, review_number):
   results = cursor.mappings().all()
   cursor.close()
 
-  if results is None:
+  if not results:
     message = "The review does not exist."
     return render_template("error.html", message=message)
   
