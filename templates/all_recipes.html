@@ -58,7 +58,7 @@
             {% endfor %}
         </td>
         <td>{{ recipe.totaltime }}</td>
-        <td>{{ recipe.aggregatedrating }}</td>
+        <td>{{ "{:.1f}".format(recipe.aggregatedrating) }}</td>
         <td>
             {% if recipe.calories %}
                 {{ recipe.calories }}
