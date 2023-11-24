@@ -83,17 +83,18 @@ def teardown_request(exception):
 
 # Get all users with their id and displayname for displaying a dropdown menu for user selection
 def all_users():
-  cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
-  g.conn.commit()
-  results = cursor.mappings().all()
-  users = {}
-  for result in results:
-    userid = result["userid"]
-    if userid not in users:
-      users[userid] = {
-        "displayname": result["displayname"]
-      }
-  cursor.close()
+  with app.app_context():
+    cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+    g.conn.commit()
+    results = cursor.mappings().all()
+    users = {}
+    for result in results:
+      userid = result["userid"]
+      if userid not in users:
+        users[userid] = {
+          "displayname": result["displayname"]
+        }
+    cursor.close()
 
   return users
 

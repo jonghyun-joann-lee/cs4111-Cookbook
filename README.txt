@@ -243,3 +243,44 @@ Made a minor tweak to reflect the variables that I pass onto the tempaltes.
 Also, referred to the response by ChatGPT on how to create a route function in python that uses the input submitted by the user (the selected user displayname).
 Also, made a minor tweak here to redirect users to the index page.
 Plus, searched on Google how to use the Flask's session object and pass on context to every template using @app.context_processor.
+
+
+7. Debugging error related to Flask
+a. Prompt:
+What is this error? What should I do?
+
+Traceback (most recent call last):
+  File "server.py", line 101, in <module>
+    users = all_users()
+  File "server.py", line 86, in all_users
+    cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+  File "/home/jl6509/.virtualenvs/dbproj/lib/python3.8/site-packages/werkzeug/local.py", line 311, in __get__
+    obj = instance._get_current_object()
+  File "/home/jl6509/.virtualenvs/dbproj/lib/python3.8/site-packages/werkzeug/local.py", line 508, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+
+b. Response:
+
+The error you're encountering is because you're trying to use Flask's g object outside of an application context. Flask's g object, which is used for storing and sharing data during the lifetime of an app context (typically a web request), cannot be accessed when your application is starting up or outside of a view function.
+
+Since you're trying to fetch users at the module level (i.e., when your Python script is being executed, which is outside of an application context), you're seeing this error.
+
+Here's how you can modify your all_users() function to run within an application context:
+
+def all_users():
+    with app.app_context():
+        cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+        results = cursor.mappings().all()
+        users = {result['UserID']: result['DisplayName'] for result in results}
+        cursor.close()
+    return users
+By wrapping the database access code with app.app_context(), you manually create an application context, which allows you to use g.
+
+c. Usage:
+Implemented the way of wrapping my code with app.app_context() as suggested by ChatGPT.
+
