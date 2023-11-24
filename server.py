@@ -561,9 +561,9 @@ def submit_review(recipe_id):
 
     # Also update ReviewCount and AggregatedRating in recipes table
     new_aggregatedrating = (aggregatedrating * reviewcount + rating) / reviewnumber
-    g.conn.execute(text("""UPDATE Recipes_written_by R
-                        SET R.ReviewCount = :reviewnumber, R.AggregatedRating = :newaggregatedrating
-                        WHERE R.RecipeID = :recipeid"""), {"reviewnumber": reviewnumber, "recipeid": recipe_id, "newaggregatedrating": new_aggregatedrating})
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET ReviewCount = :reviewnumber, AggregatedRating = :newaggregatedrating
+                        WHERE RecipeID = :recipeid"""), {"reviewnumber": reviewnumber, "recipeid": recipe_id, "newaggregatedrating": new_aggregatedrating})
     g.conn.commit()
 
     # Also update ReviewsWritten in Users table
@@ -579,9 +579,9 @@ def submit_review(recipe_id):
 
     reviewswritten += 1 # Increment ReviewsWritten by 1
 
-    g.conn.execute(text("""UPDATE Users U
-                        SET U.ReviewsWritten = :reviewswritten
-                        WHERE U.UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
+    g.conn.execute(text("""UPDATE Users
+                        SET ReviewsWritten = :reviewswritten
+                        WHERE UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
 
     return redirect('/recipe/<int:recipe_id>', recipe_id=recipe_id)
 
