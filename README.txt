@@ -281,6 +281,30 @@ def all_users():
     return users
 By wrapping the database access code with app.app_context(), you manually create an application context, which allows you to use g.
 
+Alternatively, since you're fetching users at the start of your application, you might want to establish a connection to the database directly rather than using g.conn. Here's an example of how you might do it:
+
+from sqlalchemy import create_engine, text
+
+# Assuming you have a DATABASE_URI variable set up in your config
+database_uri = "your_database_uri_here"  # Replace with your database URI
+engine = create_engine(database_uri)
+
+def all_users():
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT UserID, DisplayName FROM People"))
+        users = {row['UserID']: row['DisplayName'] for row in result}
+        return users
+
+# Now you can call all_users() to initialize the global users variable
+users = all_users()
+
+In this case, you're not using Flask's g object at all but rather creating a new database connection using SQLAlchemy's create_engine method, which is independent of the Flask app context.
+
+Remember that if you use the second approach, you need to ensure that your database URI is correctly set up in app.config['DATABASE_URI'].
+
+Choose the method that best fits your application's design and structure.
+
 c. Usage:
-Implemented the way of wrapping my code with app.app_context() as suggested by ChatGPT.
+Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error.
+So implemented the second way of using engine.connect() as conn.
 
