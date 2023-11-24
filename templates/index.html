@@ -15,6 +15,8 @@
   <h1>Welcome to GravanosCookBook</h1>
   <p>An all-in-one culinary experience for cooking enthusiasts like you!</p>
 
+  <hr>
+  
   <form action="{{ url_for('set_user') }}" method="post">
     <label for="user_id">Select a user: </label>
     <select name="user_id" id="user_id" onchange="this.form.submit()">
