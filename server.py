@@ -91,10 +91,7 @@ def all_users():
     users = {}
     for result in results:
       userid = result["userid"]
-      if userid not in users:
-        users[userid] = {
-          "displayname": result["displayname"]
-        }
+      users[userid] = result["displayname"]
     cursor.close()
 
   return users
