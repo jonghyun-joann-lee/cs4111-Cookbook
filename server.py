@@ -534,7 +534,7 @@ def submit_review(recipe_id):
     return render_template("error.html", message=message)
   
   if request.method == 'POST':
-    rating = request.form.get('rating')
+    rating = int(request.form.get('rating'))
     content = request.form.get('content')
     datesubmitted = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
