@@ -207,3 +207,195 @@ For creating the dropbox, search box, and search button, copied the provided cod
 For creating route function in python, referred to ChatGPT on how to access the user's input (e.g. request.args.get('search_type')), but implemented the search logic and processing of the results by myself.
 For search_results.html, did not refer to ChatGPT's response. I used the same table style in all_recipes.html that I previously wrote.
 
+6. Aksed how to create a dropdown menu that lists all users and allow to choose one in HTML
+a. Prompt: 
+Please write in HTML for displaying a dropdown menu that allows to choose a user based on displayname (with a loop that goes around for all users) and store the user_id for the session. I'm using Flask and Jinja2 template. 
+
+b. Response:
+1. User Dropdown on Each Page:
+You could add a dropdown menu to your website's layout that lists all users. When a selection is made, the chosen user ID is stored in the session. This allows you to "simulate" different users interacting with the application without a login system.
+
+<!-- Place this in a base template that other templates extend -->
+<form action="{{ url_for('set_user') }}" method="post">
+    <select name="user_id" onchange="this.form.submit()">
+        {% for user in users %}
+            <option value="{{ user.UserID }}">{{ user.DisplayName }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+2. Route to Set the Current User:
+
+@app.route('/set_user', methods=['POST'])
+def set_user():
+    session['user_id'] = request.form['user_id']
+    return redirect(request.referrer or url_for('index'))
+This route sets the selected user ID into the session and then redirects back to the page the user was on, or to the index if the referrer is not available.
+
+3. Using the Current User ID:
+When you need to perform actions like submitting reviews or recipes, you would use session['user_id'] to get the currently selected user's ID.
+
+For displaying the dropdown, make sure to fetch the list of users from the database and pass it to your base template. If you're using template inheritance, you can make this dropdown part of your base layout so it's available on every page.
+
+c. Usage: 
+Integrated the provided HTML code by ChatGPT into all HTML templates to allow selecting who the current user is. This was to mimic the user login system and show different functionalities based on who the current user is. Any user can write new reviews or recipes, but the current user can modify or delete only its review or recipe.
+Made a minor tweak to reflect the variables that I pass onto the templates. 
+Also, referred to the response by ChatGPT on how to create a route function in python that uses the input submitted by the user (the selected user displayname) and redirecting users to previous page or the main page.
+Plus, searched on Google how to use the Flask's session object and pass on context to every template using @app.context_processor.
+
+
+6-1. Follow up on changing the design of the user list dropdown.
+a. Prompt:
+I have this HTML code that I used to make a dropdown menu that allows users to choose the current user.
+
+ <form action="{{ url_for('set_user') }}" method="post">
+    <select name="user_id" onchange="this.form.submit()">
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}">{{ displayname }}</option>
+        {% endfor %}
+    </select>
+  </form>
+
+Before the dropdown menu, I would like to have "Select a user: ", and after the dropdown menu, I would like to show who the selected current user is. For example, say "Current user is allionsmommy". If no one is selected, say "No user selected."
+
+b. Response:
+To adjust your HTML code to include the desired elements, you can modify your HTML code:
+
+<form action="{{ url_for('set_user') }}" method="post">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id == session['user_id'] %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if session['user_id'] %}
+    <p>Current user is {{ users[session['user_id']] }}</p>
+{% else %}
+    <p>No user selected.</p>
+{% endif %}
+
+c. Usage:
+Modified my HTML code based on ChatGPT's response.
+
+
+6-2. Follow up on changing the design of the dropdown menu after testing it again
+a. Prompt:
+I want to fix the issue of after selecting a user once, cannot go back to not selecting any user. Also, I would like to know if there's any simple way of putting "Select a user:" and "Current user is" in the same line.
+
+b. Response:
+To allow for the option of not having any user selected, you can add an initial <option> in your dropdown with a blank or placeholder value. For the display issue, you can format your HTML to put the text and dropdown on the same line using inline elements or CSS styling.
+
+Here's how to modify the dropdown and text display:
+
+<form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        <option value="">-- None --</option>
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id|string == session.get('user_id', '') %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+<span>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']|int] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+</span>
+
+In this code:
+
+The form and the span are displayed inline because the form's display CSS property is set to inline.
+The option -- None -- with an empty value is added as the first option. If this is selected and the form is submitted, session['user_id'] will be set to an empty string, which you can interpret as no user being selected.
+The session.get('user_id', '') method is used to safely retrieve user_id from the session, returning an empty string if user_id is not set. This ensures that the -- None -- option will be selected if there's no user set in the session.
+The label and current user information are kept outside the form but within a span tag to keep them on the same line as the form.
+You may need to adjust the styling further based on your page's layout and CSS.
+
+In your set_user function, you should handle the case when an empty value is submitted:
+
+@app.route('/set_user', methods=['POST'])
+def set_user():
+    user_id = request.form.get('user_id')
+    if user_id:
+        session['user_id'] = int(user_id)
+    else:
+        session.pop('user_id', None)  # Remove the user_id from the session if no user is selected
+    return redirect(request.referrer or url_for('index'))
+
+This updated set_user function checks if a user_id is provided; if not, it removes user_id from the session. This allows the state of "no user selected" to be represented in your application.
+
+c. Usage:
+Integrated the codes provided by ChatGPT into my server.py set_user function and the HTML templates.
+
+
+7. Debugging error related to Flask
+a. Prompt:
+What is this error? What should I do?
+
+Traceback (most recent call last):
+  File "server.py", line 101, in <module>
+    users = all_users()
+  File "server.py", line 86, in all_users
+    cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+  File "/home/jl6509/.virtualenvs/dbproj/lib/python3.8/site-packages/werkzeug/local.py", line 311, in __get__
+    obj = instance._get_current_object()
+  File "/home/jl6509/.virtualenvs/dbproj/lib/python3.8/site-packages/werkzeug/local.py", line 508, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
+
+b. Response:
+
+The error you're encountering is because you're trying to use Flask's g object outside of an application context. Flask's g object, which is used for storing and sharing data during the lifetime of an app context (typically a web request), cannot be accessed when your application is starting up or outside of a view function.
+
+Since you're trying to fetch users at the module level (i.e., when your Python script is being executed, which is outside of an application context), you're seeing this error.
+
+Here's how you can modify your all_users() function to run within an application context:
+
+def all_users():
+    with app.app_context():
+        cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
+        results = cursor.mappings().all()
+        users = {result['UserID']: result['DisplayName'] for result in results}
+        cursor.close()
+    return users
+By wrapping the database access code with app.app_context(), you manually create an application context, which allows you to use g.
+
+Alternatively, since you're fetching users at the start of your application, you might want to establish a connection to the database directly rather than using g.conn. Here's an example of how you might do it:
+
+from sqlalchemy import create_engine, text
+
+# Assuming you have a DATABASE_URI variable set up in your config
+database_uri = "your_database_uri_here"  # Replace with your database URI
+engine = create_engine(database_uri)
+
+def all_users():
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT UserID, DisplayName FROM People"))
+        users = {row['UserID']: row['DisplayName'] for row in result}
+        return users
+
+# Now you can call all_users() to initialize the global users variable
+users = all_users()
+
+In this case, you're not using Flask's g object at all but rather creating a new database connection using SQLAlchemy's create_engine method, which is independent of the Flask app context.
+
+Remember that if you use the second approach, you need to ensure that your database URI is correctly set up in app.config['DATABASE_URI'].
+
+Choose the method that best fits your application's design and structure.
+
+c. Usage:
+Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error.
+So implemented the second way of using engine.connect() as conn.
+
