@@ -31,7 +31,7 @@
 
   <span>
       {% if session.get('user_id') %}
-          Current user is {{ users[session['user_id'] }}
+          Current user is {{ users[session['user_id']] }}
       {% else %}
           No user selected.
       {% endif %}
