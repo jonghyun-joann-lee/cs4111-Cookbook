@@ -16,23 +16,26 @@
   <p>An all-in-one culinary experience for cooking enthusiasts like you!</p>
 
   <hr>
-  
-  <form action="{{ url_for('set_user') }}" method="post">
-    <label for="user_id">Select a user: </label>
-    <select name="user_id" id="user_id" onchange="this.form.submit()">
-        {% for user_id, displayname in users.items() %}
-            <option value="{{ user_id }}" {% if user_id == session['user_id'] %}selected{% endif %}>
-                {{ displayname }}
-            </option>
-        {% endfor %}
-    </select>
-</form>
 
-{% if session['user_id'] %}
-    <p>Current user is {{ users[session['user_id']] }}</p>
-{% else %}
-    <p>No user selected.</p>
-{% endif %}
+  <form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+      <label for="user_id">Select a user: </label>
+      <select name="user_id" id="user_id" onchange="this.form.submit()">
+          <option value="">-- None --</option>
+          {% for user_id, displayname in users.items() %}
+              <option value="{{ user_id }}" {% if user_id|string == session.get('user_id', '') %}selected{% endif %}>
+                  {{ displayname }}
+              </option>
+          {% endfor %}
+      </select>
+  </form>
+
+  <span>
+      {% if session.get('user_id') %}
+          Current user is {{ users[session['user_id']|int] }}
+      {% else %}
+          No user selected.
+      {% endif %}
+  </span>
 
   <form action="{{ url_for('search_results') }}" method="get">
     <label for="search-for">Search for a recipe:</label>

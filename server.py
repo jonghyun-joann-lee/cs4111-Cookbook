@@ -107,7 +107,11 @@ def inject_user():
 # Set user for current session based on the user_id selected from the dropdown menu
 @app.route('/set_user', methods=['POST'])
 def set_user():
-  session['user_id'] = request.form['user_id']
+  user_id = request.form.get('user_id')
+  if user_id:
+    session['user_id'] = user_id
+  else:
+    session.pop('user_id', None)  # Remove the user_id from the session if no user is selected
   # After setting the user, redirect to the previous page if it exists or else, the main page
   return redirect(request.referrer or '/')
 

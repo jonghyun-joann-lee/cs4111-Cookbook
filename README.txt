@@ -239,10 +239,101 @@ For displaying the dropdown, make sure to fetch the list of users from the datab
 
 c. Usage: 
 Integrated the provided HTML code by ChatGPT into all HTML templates to allow selecting who the current user is. This was to mimic the user login system and show different functionalities based on who the current user is. Any user can write new reviews or recipes, but the current user can modify or delete only its review or recipe.
-Made a minor tweak to reflect the variables that I pass onto the tempaltes.
-Also, referred to the response by ChatGPT on how to create a route function in python that uses the input submitted by the user (the selected user displayname).
-Also, made a minor tweak here to redirect users to the index page.
+Made a minor tweak to reflect the variables that I pass onto the templates. 
+Also, referred to the response by ChatGPT on how to create a route function in python that uses the input submitted by the user (the selected user displayname) and redirecting users to previous page or the main page.
 Plus, searched on Google how to use the Flask's session object and pass on context to every template using @app.context_processor.
+
+
+6-1. Follow up on changing the design of the user list dropdown.
+a. Prompt:
+I have this HTML code that I used to make a dropdown menu that allows users to choose the current user.
+
+ <form action="{{ url_for('set_user') }}" method="post">
+    <select name="user_id" onchange="this.form.submit()">
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}">{{ displayname }}</option>
+        {% endfor %}
+    </select>
+  </form>
+
+Before the dropdown menu, I would like to have "Select a user: ", and after the dropdown menu, I would like to show who the selected current user is. For example, say "Current user is allionsmommy". If no one is selected, say "No user selected."
+
+b. Response:
+To adjust your HTML code to include the desired elements, you can modify your HTML code:
+
+<form action="{{ url_for('set_user') }}" method="post">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id == session['user_id'] %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if session['user_id'] %}
+    <p>Current user is {{ users[session['user_id']] }}</p>
+{% else %}
+    <p>No user selected.</p>
+{% endif %}
+
+c. Usage:
+Modified my HTML code based on ChatGPT's response.
+
+
+6-2. Follow up on changing the design of the dropdown menu after testing it again
+a. Prompt:
+I want to fix the issue of after selecting a user once, cannot go back to not selecting any user. Also, I would like to know if there's any simple way of putting "Select a user:" and "Current user is" in the same line.
+
+b. Response:
+To allow for the option of not having any user selected, you can add an initial <option> in your dropdown with a blank or placeholder value. For the display issue, you can format your HTML to put the text and dropdown on the same line using inline elements or CSS styling.
+
+Here's how to modify the dropdown and text display:
+
+<form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        <option value="">-- None --</option>
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id|string == session.get('user_id', '') %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+<span>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']|int] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+</span>
+
+In this code:
+
+The form and the span are displayed inline because the form's display CSS property is set to inline.
+The option -- None -- with an empty value is added as the first option. If this is selected and the form is submitted, session['user_id'] will be set to an empty string, which you can interpret as no user being selected.
+The session.get('user_id', '') method is used to safely retrieve user_id from the session, returning an empty string if user_id is not set. This ensures that the -- None -- option will be selected if there's no user set in the session.
+The label and current user information are kept outside the form but within a span tag to keep them on the same line as the form.
+You may need to adjust the styling further based on your page's layout and CSS.
+
+In your set_user function, you should handle the case when an empty value is submitted:
+
+@app.route('/set_user', methods=['POST'])
+def set_user():
+    user_id = request.form.get('user_id')
+    if user_id:
+        session['user_id'] = int(user_id)
+    else:
+        session.pop('user_id', None)  # Remove the user_id from the session if no user is selected
+    return redirect(request.referrer or url_for('index'))
+
+This updated set_user function checks if a user_id is provided; if not, it removes user_id from the session. This allows the state of "no user selected" to be represented in your application.
+
+c. Usage:
+Integrated the codes provided by ChatGPT into my server.py set_user function and the HTML templates.
 
 
 7. Debugging error related to Flask
