@@ -387,7 +387,8 @@ def recipe_insights(recipe_id):
         "content": result["content"],
         "datesubmitted": result["datesubmitted"],
         "datemodified": result["datemodified"],
-        "author": result["displayname"]
+        "author": result["displayname"],
+        "userid": result["userid"]
       }
 
   cursor.close()

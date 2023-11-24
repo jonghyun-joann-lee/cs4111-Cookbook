@@ -102,14 +102,18 @@
   <h3>Reviews ({{ recipe.reviewcount }})</h3>
   <h4><a href="{{ url_for('submit_review', recipe_id=recipe.recipeid) }}">Write a review</a></h4>
   {% for reviewnumber, review in reviews.items() %}
-    <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
-    {% if review.content %}
-        <p>"{{ review.content }}"</p>
-    {% endif %}
-    <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
-    <hr>
+    <div>
+        <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
+        {% if review.content %}
+            <p>"{{ review.content }}"</p>
+        {% endif %}
+        <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
+        {% if session.get('user_id') == review.userid %} <!-- Display Edit link only when current user is author of review -->
+            <p><a href="{{ url_for('edit_review', recipe_id=recipe.recipeid, review_number=reviewnumber) }}">Edit</a></p>
+        {% endif %}
+        <hr>
+    </div>
   {% endfor %}
-
 
   <h4><a href="/">Go to main page</a></h4>
 
