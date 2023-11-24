@@ -103,7 +103,9 @@
   <h4><a href="{{ url_for('submit_review', recipe_id=recipe.recipeid) }}">Write a review</a></h4>
   {% for reviewnumber, review in reviews.items() %}
     <p>Rating: {{ review.rating }}, Written by: {{ review.author }}</p>
-    <p>"{{ review.content }}"</p>
+    {% if review.content %}
+        <p>"{{ review.content }}"</p>
+    {% endif %}
     <p>Submitted on {{ review.datesubmitted }}{% if review.datemodified %}, Modified on {{ review.datemodified }}{% endif %}</p>
     <hr>
   {% endfor %}
