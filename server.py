@@ -671,6 +671,89 @@ def edit_review(recipe_id, review_number):
   
 
 # Delete an existing review (can only be done by the review's author)
+@app.route('/recipe/<int:recipe_id>/delete_review/<int:review_number>', methods=['GET', 'POST'])
+def delete_review(recipe_id, review_number):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to delete a review."
+    return render_template("error.html", message=message)
+  
+  # Get the review to be edited to prefill the form and calculate new AggregatedRating
+  cursor = g.conn.execute(text("""
+                               SELECT Rating, Content, UserID
+                               FROM Reviews_created_by_evaluates
+                               WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                               """), {"recipeid": recipe_id, "reviewnumber": review_number})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+
+  if results is None:
+    message = "The review does not exist."
+    return render_template("error.html", message=message)
+  
+  review = {}
+  for result in results:
+    if user_id != int(result["userid"]): # Verify that the current user is the author of review
+      message = "You can only delete your own reviews." 
+      return render_template("error.html", message=message)
+    review["rating"] = result["rating"] # Current rating
+    review["content"] = result["content"]
+    review["userid"] = result["userid"]
+
+  if request.method == 'POST': # Delete review if user confirms it
+    
+    g.conn.execute(text("""
+                        DELETE FROM Reviews_created_by_evaluates
+                        WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                        """), {"recipeid": recipe_id, "reviewnumber": review_number})
+    g.conn.commit()
+
+    # Update AggregatedRating and ReviewCount in recipes table
+    # First, need to get the current AggregatedRating and ReviewCount
+    cursor = g.conn.execute(text("""SELECT R.ReviewCount, R.AggregatedRating
+                                 FROM Recipes_written_by R
+                                 WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+    g.conn.commit()
+    reviewcount = None
+    aggregatedrating = None
+    for result in cursor:
+      reviewcount = result[0]
+      aggregatedrating = result[1]
+    cursor.close()
+    
+    new_reviewcount = reviewcount - 1
+    if new_reviewcount > 0:
+      new_aggregatedrating = (aggregatedrating * reviewcount - review["rating"]) / new_reviewcount
+    else: # If no review left
+      new_aggregatedrating = 0
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET AggregatedRating = :new_aggregatedrating, ReviewCount = :new_reviewcount
+                        WHERE RecipeID = :recipeid"""), 
+                        {"recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating, "new_reviewcount": new_reviewcount})
+    g.conn.commit()
+
+    # Also update ReviewsWritten in Users table
+    # First, get current ReviewsWritten
+    cursor = g.conn.execute(text("""SELECT U.ReviewsWritten
+                                 FROM Users U
+                                 WHERE U.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    reviewswritten = None
+    for result in cursor:
+      reviewswritten = result[0]
+    cursor.close()
+
+    reviewswritten -= 1 # Decrement ReviewsWritten by 1
+
+    g.conn.execute(text("""UPDATE Users
+                        SET ReviewsWritten = :reviewswritten
+                        WHERE UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
+    g.conn.commit()
+
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
+  
+  return render_template('delete_review.html', review=review, recipe_id=recipe_id, review_number=review_number)
 
 
 # Submit a new recipe (can only be done by signed in users)

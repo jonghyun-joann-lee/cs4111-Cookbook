@@ -546,3 +546,20 @@ Alternatively, if you have a CSS file ... (omitted this part)
 
 c. Usage:
 Copied the code provided by ChatGPT and changed the value for width and height by testing them out
+
+
+11. Asked how to round up float in HTML
+a. Prompt:
+When the aggregated rating is for example like this Aggregated Rating: 3.6666667, I want to round up to 3.7 (1 decimal point). Can I do that in this HTML code where I display it?
+
+  <p>Aggregated Rating: {{ recipe.aggregatedrating }}</p>
+
+b. Response:
+Yes, you can round numbers to a specific number of decimal places in your HTML template using Jinja's format filter. To round the aggregatedrating to one decimal place, you would modify your code like this:
+
+<p>Aggregated Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}</p>
+
+The "{:.1f}".format() is a Python string formatting syntax to round the number to one decimal place. When you use this inside a Jinja template, it will display the aggregatedrating rounded to one decimal place.
+
+c. Usage:
+Copied the code provided by ChatGPT

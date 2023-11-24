@@ -41,7 +41,7 @@
     {% endfor %}
   </p>
 
-  <p>Aggregated Rating: {{ recipe.aggregatedrating }}</p>
+  <p>Aggregated Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}</p>
 
   <hr>
 
