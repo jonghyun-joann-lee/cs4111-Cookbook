@@ -528,9 +528,9 @@ def search_results():
 # Submit a new review (can only be done by signed in users)
 @app.route('/recipe/<int:recipe_id>/submit_review', methods=['GET', 'POST'])
 def submit_review(recipe_id):
-  user_id = session['user_id'] # Get the current user's ID
+  user_id = session.get('user_id') # Get the current user's ID
   if not user_id: # If no user selected
-    return "You must be logged in to submit a review.", 403
+    return "You must select a user to submit a review.", 403
   
   if request.method == 'POST':
     rating = request.form.get('rating')
