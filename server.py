@@ -90,7 +90,7 @@ def all_users():
     results = cursor.mappings().all()
     users = {}
     for result in results:
-      userid = result["userid"]
+      userid = str(result["userid"])
       users[userid] = result["displayname"]
     cursor.close()
 
