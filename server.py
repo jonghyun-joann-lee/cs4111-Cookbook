@@ -623,10 +623,14 @@ def edit_review(recipe_id, review_number):
     message = "The review does not exist."
     return render_template("error.html", message=message)
   
+  review = {}
   for result in results:
     if user_id != int(result["userid"]):
       message = "You can only edit your own reviews."
       return render_template("error.html", message=message)
+    review["rating"] = result["rating"]
+    review["content"] = result["content"]
+    review["userid"] = result["userid"]
   
   if request.method == 'POST': # Update review based on user input
     new_rating = int(request.form.get('rating'))
