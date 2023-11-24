@@ -26,12 +26,14 @@
 
   <form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
     <label for="rating">Rating (1-5):</label>
-    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required>
+    <!-- Prefill with current rating and content -->
+    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required 
+           style="width: 100px; height: 30px; font-size: 16px;"> <!-- Increase the width and height as needed -->
     
     <label for="content">Review:</label>
-    <textarea name="content">{{ review.content }}</textarea>
+    <textarea name="content" style="width: 100%; height: 150px; font-size: 16px;">{{ review.content }}</textarea>
     
-    <button type="submit">Update Review</button>
+    <button type="submit" style="font-size: 16px; padding: 10px 20px;">Update Review</button>
   </form>
 
   <h4><a href="/">Go to main page</a></h4>
