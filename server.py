@@ -522,12 +522,6 @@ def search_results():
     return render_template("search_results.html", **context)
 
 
-# Set the current user for the session
-@app.route('/set_user', methods=['POST'])
-def set_user():
-
-
-
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add(): 
