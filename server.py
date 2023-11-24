@@ -609,7 +609,7 @@ def edit_review(recipe_id, review_number):
     message = "You must select a user to edit a review."
     return render_template("error.html", message=message)
   
-  # Get the review to be edited and verify that the current user is the author of that review
+  # Get the review to be edited to prefill the form and calculate new AggregatedRating
   cursor = g.conn.execute(text("""
                                SELECT Rating, Content, UserID
                                FROM Reviews_created_by_evaluates
@@ -625,10 +625,10 @@ def edit_review(recipe_id, review_number):
   
   review = {}
   for result in results:
-    if user_id != int(result["userid"]):
-      message = "You can only edit your own reviews."
+    if user_id != int(result["userid"]): # Verify that the current user is the author of review
+      message = "You can only edit your own reviews." 
       return render_template("error.html", message=message)
-    review["rating"] = result["rating"]
+    review["rating"] = result["rating"] # Current rating
     review["content"] = result["content"]
     review["userid"] = result["userid"]
   
@@ -644,6 +644,25 @@ def edit_review(recipe_id, review_number):
                         SET Rating = :new_rating, Content = :new_content, DateModified = :datemodified
                         WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
                         """), params_dict)
+    g.conn.commit()
+
+    # Update AggregatedRating in recipes table
+    # First, need to get the current AggregatedRating and ReviewCount
+    cursor = g.conn.execute(text("""SELECT R.ReviewCount, R.AggregatedRating
+                                 FROM Recipes_written_by R
+                                 WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+    g.conn.commit()
+    reviewcount = None
+    aggregatedrating = None
+    for result in cursor:
+      reviewcount = result[0]
+      aggregatedrating = result[1]
+    cursor.close()
+
+    new_aggregatedrating = (aggregatedrating * reviewcount - review["rating"] + new_rating) / reviewcount
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET AggregatedRating = :new_aggregatedrating
+                        WHERE RecipeID = :recipeid"""), {"recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating})
     g.conn.commit()
 
     return redirect(url_for('recipe_insights', recipe_id=recipe_id))

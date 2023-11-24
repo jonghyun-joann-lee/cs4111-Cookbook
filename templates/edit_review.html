@@ -28,8 +28,8 @@
     <label for="rating">Rating (1-5):</label>
     <!-- Prefill with current rating and content -->
     <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required 
-           style="width: 100px; height: 30px; font-size: 16px;"> <!-- Increase the width and height as needed -->
-    
+           style="width: 30px; height: 30px; font-size: 16px;"> 
+    <br>
     <label for="content">Review:</label>
     <textarea name="content" style="width: 100%; height: 150px; font-size: 16px;">{{ review.content }}</textarea>
     

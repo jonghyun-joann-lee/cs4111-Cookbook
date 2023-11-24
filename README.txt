@@ -500,3 +500,49 @@ This approach offers a more user-friendly experience by handling cases where the
 
 c. Usage:
 Copied the HTML code provided by ChatGPT into error.html with a minor change in the path to the index page
+
+
+10. Asked how to style HTML to make the input box for rating and review bigger
+a. Prompt:
+Is there any simple way to make the block for the rating and content bigger in this HTML code?
+
+  <form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <!-- Prefill with current rating and content -->
+    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required> 
+    
+    <label for="content">Review:</label>
+    <textarea name="content">{{ review.content }}</textarea>
+    
+    <button type="submit">Update Review</button>
+  </form>
+
+b. Response:
+To make the input for the rating and the content text area larger, you can use CSS to style these elements. You can either include the styles directly in your HTML with the style attribute, or you can define CSS classes in a separate stylesheet and apply them to your elements.
+
+Here's how you can use inline styles to increase the size of the input and textarea:
+
+<form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <!-- Prefill with current rating and content -->
+    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required 
+           style="width: 100px; height: 30px; font-size: 16px;"> <!-- Increase the width and height as needed -->
+    
+    <label for="content">Review:</label>
+    <textarea name="content" style="width: 100%; height: 150px; font-size: 16px;">{{ review.content }}</textarea>
+    <!-- Increase the width (percentage or pixels), height, and font-size as needed -->
+    
+    <button type="submit" style="font-size: 16px; padding: 10px 20px;">Update Review</button>
+    <!-- Adjust the font size and padding as needed -->
+</form>
+
+In this example:
+
+The width and height properties of the input and textarea have been increased to make them larger. You can adjust these values to suit your needs.
+The font-size property has also been increased to make the text inside the input and textarea larger and more readable.
+For the button, font-size and padding are adjusted to make it more prominent.
+
+Alternatively, if you have a CSS file ... (omitted this part)
+
+c. Usage:
+Copied the code provided by ChatGPT and changed the value for width and height by testing them out
