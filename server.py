@@ -616,16 +616,17 @@ def edit_review(recipe_id, review_number):
                                WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
                                """), {"recipeid": recipe_id, "reviewnumber": review_number})
   g.conn.commit()
-  review = cursor.mappings().all()
+  results = cursor.mappings().all()
   cursor.close()
 
-  if review is None:
+  if results is None:
     message = "The review does not exist."
     return render_template("error.html", message=message)
   
-  if user_id != int(review["userid"]):
-    message = "You can only edit your own reviews."
-    return render_template("error.html", message=message)
+  for result in results:
+    if user_id != int(result["userid"]):
+      message = "You can only edit your own reviews."
+      return render_template("error.html", message=message)
   
   if request.method == 'POST': # Update review based on user input
     new_rating = int(request.form.get('rating'))
