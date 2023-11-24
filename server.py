@@ -90,7 +90,7 @@ def all_users():
     results = cursor.mappings().all()
     users = {}
     for result in results:
-      userid = str(result["userid"])
+      userid = result["userid"]
       users[userid] = result["displayname"]
     cursor.close()
 
@@ -109,7 +109,7 @@ def inject_user():
 def set_user():
   user_id = request.form.get('user_id')
   if user_id:
-    session['user_id'] = user_id
+    session['user_id'] = int(user_id)
   else:
     session.pop('user_id', None)  # Remove the user_id from the session if no user is selected
   # After setting the user, redirect to the previous page if it exists or else, the main page
