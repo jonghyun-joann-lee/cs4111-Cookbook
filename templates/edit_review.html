@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Edit Review </title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <p>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+  </p>
+
+  <h2>Edit your review</h2>
+
+  <form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <input type="number" name="rating" value="{{ review['Rating'] }}" min="1" max="5" required>
+    
+    <label for="content">Review:</label>
+    <textarea name="content" required>{{ review['Content'] }}</textarea>
+    
+    <button type="submit">Update Review</button>
+  </form>
+
+  <h4><a href="/">Go to main page</a></h4>
+
+</body>
+
+</html>

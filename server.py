@@ -563,8 +563,8 @@ def submit_review(recipe_id):
     # Also update ReviewCount and AggregatedRating in recipes table
     new_aggregatedrating = (aggregatedrating * reviewcount + rating) / reviewnumber
     g.conn.execute(text("""UPDATE Recipes_written_by
-                        SET ReviewCount = :reviewnumber, AggregatedRating = :newaggregatedrating
-                        WHERE RecipeID = :recipeid"""), {"reviewnumber": reviewnumber, "recipeid": recipe_id, "newaggregatedrating": new_aggregatedrating})
+                        SET ReviewCount = :reviewnumber, AggregatedRating = :new_aggregatedrating
+                        WHERE RecipeID = :recipeid"""), {"reviewnumber": reviewnumber, "recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating})
     g.conn.commit()
 
     # Also update ReviewsWritten in Users table
@@ -600,8 +600,50 @@ def submit_review(recipe_id):
   return render_template('submit_review.html', recipe_id=recipe_id, recipename=recipename)
 
 
-# Modify an existing review (can only be done by the review's author)
+# Edit an existing review (can only be done by the review's author)
+@app.route('/recipe/<int:recipe_id>/edit_review/<int:review_number>', methods=['GET', 'POST'])
+def edit_review(recipe_id, review_number):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to edit a review."
+    return render_template("error.html", message=message)
+  
+  # Get the review to be edited and verify that the current user is the author of that review
+  cursor = g.conn.execute(text("""
+                               SELECT Rating, Content, UserID
+                               FROM Reviews_created_by_evaluates
+                               WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                               """), {"recipeid": recipe_id, "reviewnumber": review_number})
+  g.conn.commit()
+  review = cursor.mappings().all()
+  cursor.close()
 
+  if review is None:
+    message = "The review does not exist."
+    return render_template("error.html", message=message)
+  
+  if user_id != int(review["userid"]):
+    message = "You can only edit your own reviews."
+    return render_template("error.html", message=message)
+  
+  if request.method == 'POST': # Update review based on user input
+    new_rating = int(request.form.get('rating'))
+    new_content = request.form.get('content')
+    datemodified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    params_dict = {"new_rating": new_rating, "new_content": new_content, "datemodified": datemodified,
+                   "recipeid": recipe_id, "reviewnumber": review_number}
+    g.conn.execute(text("""
+                        UPDATE Reviews_created_by_evaluates
+                        SET Rating = :new_rating, Content = :new_content, DateModified = :datemodified
+                        WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                        """), params_dict)
+    g.conn.commit()
+
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
+  
+  return render_template('edit_review.html', review=review, recipe_id=recipe_id, review_number=review_number)
+  
 
 # Delete an existing review (can only be done by the review's author)
 
@@ -609,7 +651,7 @@ def submit_review(recipe_id):
 # Submit a new recipe (can only be done by signed in users)
 
 
-# Modify an existing recipe (can only be done by the recipe's author)
+# Edit an existing recipe (can only be done by the recipe's author)
 
 
 # Delete an existing recipe (can only be done by the recipe's author)
