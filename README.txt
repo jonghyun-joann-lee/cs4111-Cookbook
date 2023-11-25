@@ -366,10 +366,8 @@ Here's how you can modify your all_users() function to run within an application
 def all_users():
     with app.app_context():
         cursor = g.conn.execute(text("""SELECT UserID, DisplayName FROM People"""))
-        results = cursor.mappings().all()
-        users = {result['UserID']: result['DisplayName'] for result in results}
-        cursor.close()
-    return users
+        # Rest of your code
+
 By wrapping the database access code with app.app_context(), you manually create an application context, which allows you to use g.
 
 Alternatively, since you're fetching users at the start of your application, you might want to establish a connection to the database directly rather than using g.conn. Here's an example of how you might do it:
@@ -383,8 +381,7 @@ engine = create_engine(database_uri)
 def all_users():
     with engine.connect() as connection:
         result = connection.execute(text("SELECT UserID, DisplayName FROM People"))
-        users = {row['UserID']: row['DisplayName'] for row in result}
-        return users
+        # Rest of your code
 
 # Now you can call all_users() to initialize the global users variable
 users = all_users()
