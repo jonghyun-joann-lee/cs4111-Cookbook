@@ -37,7 +37,9 @@
   <h2>All Recipes</h2>
 
   {% if recipes %}
-  <form action="{{ url_for('filter_recipes', context='all') }}" method="get">
+  <form action="{{ url_for('filter_recipes') }}" method="get">
+    <input type="hidden" name="context" value="all">
+
     <h3>Filter recipes by</h3>
     
     <label>Calories:</label>
@@ -108,7 +110,7 @@
         {% endfor %}
     </table>
   {% else %}
-    <p>There are no recipes added to GravanosCookBook.</p>
+    <p>There are no matching recipes.</p>
   {% endif %}
   
   <h3><a href="/">Go to main page</a></h3>

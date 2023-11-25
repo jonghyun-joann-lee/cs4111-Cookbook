@@ -887,14 +887,10 @@ def submit_recipe():
 # Filter recipes by calories, sugar, aggregatedrating, and totaltime
 @app.route('/filter_recipes', methods=['GET'])
 def filter_recipes():
-  print(request.args)
-
   # First, figure out what page this filtering feature is being shown
   context = request.args.get('context') # Context can be all or category
   categoryid = request.args.get('categoryid')
   categoryname = request.args.get('categoryname')
-
-  print("Context:", context, "Category ID:", categoryid)
 
   # Base query based on context
   if context == "category" and categoryid:
