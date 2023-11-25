@@ -776,6 +776,7 @@ def submit_recipe():
     return render_template("error.html", message=message)
   
   if request.method == 'POST':
+    # Insert into recipes table
     recipename = request.form.get('recipename')
     prep_hours = int(request.form.get('prep_hours'))
     prep_minutes = int(request.form.get('prep_minutes'))
@@ -793,7 +794,7 @@ def submit_recipe():
     sugar = request.form.get('sugar')
     sugar = float(sugar) if sugar else None # Can be left blank -> null
     datepublished = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     # Need to generate RecipeID, which will be the current max RecipeID + 1
     cursor = g.conn.execute(text("""SELECT MAX(R.RecipeID) FROM Recipes_written_by R"""))
     g.conn.commit()
@@ -803,7 +804,6 @@ def submit_recipe():
     cursor.close()
     recipeid += 1 # This will be the RecipeID for this new recipe
 
-    # Insert review into reviews table
     params_dict = {"RecipeID": recipeid, "RecipeName": recipename, "CookTime": cooktime, "PrepTime": preptime, 
                    "TotalTime": totaltime, "Description": description, "Instructions": instructions, 
                    "AggregatedRating": 0, "ReviewCount": 0, "Servings": servings, "Calories": calories, 
@@ -812,6 +812,26 @@ def submit_recipe():
                         VALUES (:RecipeID, :RecipeName, :CookTime, :PrepTime, :TotalTime, :Description, :Instructions, :AggregatedRating, :ReviewCount, :Servings, :Calories, :Sugar, :UserID, :DatePublished)"""), 
                         params_dict)
     g.conn.commit()
+
+    # Insert into belongs_to table for Categories
+    selected_categories = request.form.getlist('categories')
+    for categoryid in selected_categories:
+      g.conn.execute(text("""
+                          INSERT INTO belongs_to(RecipeID, CategoryID)
+                          VALUES (:RecipeID, :CategoryID)
+                          """), {"RecipeID": recipeid, "CategoryID": categoryid})
+      g.conn.commit()
+
+    # Insert into uses table for Ingredients
+    for key in request.form:
+        if key.startswith('amount-'):
+            ingredientid = int(key.split('-')[1])
+            amount = float(request.form[key])
+            if request.form.get('ingredient-' + str(ingredientid)):
+                g.conn.execute(text("""INSERT INTO uses (RecipeID, IngredientID, ItemAmount)
+                                    VALUES (:RecipeID, :IngredientID, :ItemAmount)"""), 
+                                    {"RecipeID": recipeid, "IngredientID": ingredientid, "ItemAmount": amount})
+                g.conn.commit()
 
     # Update RecipesWritten in Authors table if current user exists in this table
     # If not, insert current user into Authors table
@@ -838,7 +858,29 @@ def submit_recipe():
 
     return render_template('thank_you.html')
   
-  return render_template('submit_recipe.html')
+  # Get a list of all categories
+  cursor = g.conn.execute(text("""SELECT * FROM Categories"""))
+  g.conn.commit()
+  results = cursor.mappings().all()
+  categories = {}
+  for result in results:
+    categoryid = result["categoryid"]
+    if categoryid not in categories:
+      categories[categoryid] = result["categoryname"]
+  cursor.close()
+
+  # Get a list of all ingredients
+  cursor = g.conn.execute(text("""SELECT * FROM Ingredients"""))
+  g.conn.commit()
+  results = cursor.mappings().all()
+  ingredients = {}
+  for result in results:
+    ingredientid = result["ingredientid"]
+    if ingredientid not in ingredients:
+      ingredients[ingredientid] = result["ingredientname"]
+  cursor.close()
+
+  return render_template('submit_recipe.html', categories=categories, ingredients=ingredients)
 
 # Edit an existing recipe (can only be done by the recipe's author)
 
