@@ -1095,7 +1095,7 @@ def view_bookmarks():
 
   # Get information about the recipes as usual
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+                               SELECT A.UserID, R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P, Users U, bookmarked M
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -1113,6 +1113,7 @@ def view_bookmarks():
       formatted_time = convert_time(result["totaltime"])
 
       all_recipes[recipe_id] = {
+        "authorid": result["userid"],
         "recipename": result["recipename"],
         "displayname": result["displayname"],
         "categories": [(result["categoryname"], result["categoryid"])],

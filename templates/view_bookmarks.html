@@ -52,7 +52,7 @@
         {% for recipe_id, recipe in recipes.items() %}
         <tr>
         <td><a href="/recipe/{{ recipe_id }}">{{ recipe.recipename }}</a></td> 
-        <td>{{ recipe.displayname }}</td> 
+        <td><a href="{{ url_for('user_profile', user_id=recipe.authorid) }}">{{ recipe.displayname }}</a></td> 
         <td>
             {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
               <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
