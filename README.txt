@@ -782,3 +782,4 @@ Renders the recipe_list.html template with the recipe data.
 
 c. Usage:
 Copied the HTML code provided by ChatGPT and made minor changes on texts that are displayed. Handled backend side by myself.
+

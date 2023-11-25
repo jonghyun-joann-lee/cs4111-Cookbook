@@ -85,7 +85,7 @@
         {% for recipe in recipes %}
         <tr>
         <td><a href="/recipe/{{ recipe[6] }}">{{ recipe[0] }}</a></td> <!-- recipe[0]=RecipeName, recipe[6]=RecipeID -->
-        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td><a href="{{ url_for('user_profile', user_id=recipe[7]) }}">{{ recipe[1] }}</a></td> <!-- Author -->
         <td>{{ recipe[2] }}</td> <!-- Total Time -->
         <td>{{ "{:.1f}".format(recipe[3]) }}</td> <!-- Aggregated Rating -->
         <td>

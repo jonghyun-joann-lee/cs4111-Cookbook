@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - User Profile - {{ user.displayname }}</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <h2>User Profile: {{ user.displayname }}</h2>
+
+  <p><strong>Reviews Written:</strong> {{ user.reviewswritten }}</p>
+  <p><strong>Following:</strong> {{ user.following }}</p>
+
+  {% if session.get('user_id') == user.userid %} <!-- Display these info only when current user is viewing their profile -->
+    <p><strong>First Name:</strong> {{ user.firstname }}</p>
+    <p><strong>Last Name:</strong> {{ user.lastname }}</p>
+    <p><strong>Email:</strong> {{ user.Email }}</p>
+    <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
+    <p><a href="{{ url_for('view_bookmarks') }}">My Bookmarks</a></p>
+  {% endif %}
+
+  {% if author %} <!-- Display these info if the user is an author -->
+    <p><strong>Recipes Written:</strong> {{ author.recipeswritten }}</p>
+    <p><strong>Followers:</strong> {{ author.followers }}</p>
+  {% endif %}
+
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>

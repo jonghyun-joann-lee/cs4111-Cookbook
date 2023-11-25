@@ -32,9 +32,10 @@
   <span>
       {% if session.get('user_id') %}
           Current user is {{ users[session['user_id']] }}
+          <a href="{{ url_for('user_profile', user_id=session.get('user_id')) }}">My Profile</a>
       {% else %}
           No user selected.
-      {% endif %}
+      {% endif %}  
   </span>
 
   <form action="{{ url_for('search_results') }}" method="get">

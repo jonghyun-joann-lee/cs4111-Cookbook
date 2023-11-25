@@ -45,8 +45,7 @@
     <p>Aggregated Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}</p>
 
     <hr>
-
-    <p>Submitted by {{ recipe.author }} on {{ recipe.datepublished }}</p> <!-- Need to add link to author's profile later-->
+    <p>Submitted by <a href="{{ url_for('user_profile', user_id=recipe.authorid) }}">{{ recipe.author }}</a> on {{ recipe.datepublished }}</p> <!-- Need to add link to author's profile later-->
     {% if recipe.description %}
         <p>"{{ recipe.description }}"</p>
     {% else %}
@@ -54,7 +53,6 @@
     <hr>
 
     <p>Ready In: {{ recipe.totaltime }} (Preparation Time: {{ recipe.preptime }}, Cooking Time: {{ recipe.cooktime }})</p>
-    
     
     <p>Servings: 
         {% if recipe.servings %}
@@ -97,6 +95,12 @@
             {% endif %}
         </p>
     {% endfor %}
+
+    <hr>
+
+    <form action="{{ url_for('bookmark_recipe', recipe_id=recipe.recipeid) }}" method="post">
+        <button type="submit">Bookmark this Recipe</button>
+    </form>  
 
     <hr>
 
