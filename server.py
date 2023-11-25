@@ -276,7 +276,7 @@ def category(category_id):
     category_name = result[0]
   cursor.close()
 
-  context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
+  context = dict(categoryid=category_id, categoryname=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
 
 
@@ -883,10 +883,115 @@ def submit_recipe():
 
   return render_template('submit_recipe.html', categories=categories, ingredients=ingredients)
 
-# Edit an existing recipe (can only be done by the recipe's author)
 
+# Filter recipes by calories, sugar, aggregatedrating, and totaltime
+@app.route('/filter_recipes', methods=['GET'])
+def filter_recipes():
+  # First, figure out what page this filtering feature is being shown
+  context = request.args.get('context') # Context can be all or category
+  categoryid = request.args.get('categoryid')
+  categoryname = request.args.get('categoryname')
 
-# Delete an existing recipe (can only be done by the recipe's author)
+  # Base query based on context
+  if context == "category" and categoryid:
+    query = """SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID
+            FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+            WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+            AND R.UserID = A.UserID AND A.UserID = P.UserID AND C.CategoryID = :categoryid"""
+    params_dict = {"categoryid": categoryid}
+  else: # Context is 'all'
+    query = """SELECT R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+            FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+            WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+            AND R.UserID = A.UserID AND A.UserID = P.UserID"""
+    params_dict = {}
+
+  # Get filter options from user
+  selected_calories = request.args.getlist('calories')
+  if request.args.get('sugar') == "true":
+    order_sugar = True
+  else:
+    order_sugar = False
+  if request.args.get('aggregatedrating') == "true":
+    order_rating = True
+  else:
+    order_rating = False
+  selected_totaltime = request.args.getlist('totaltime')
+
+  filters = [] # all chosen filter options
+
+  calories_options = {
+    "less200": "(R.Calories <= 200)",
+    "200to400": "(R.Calories BETWEEN 200 AND 400)",
+    "400to600": "(R.Calories BETWEEN 400 AND 600)",
+    "600to800": "(R.Calories BETWEEN 600 AND 800)",
+    "more800": "(R.Calories >= 800)"
+  }
+  calories_filters = []
+  for cal in selected_calories:
+    calories_filters.append(calories_options[cal])
+  filters.append(' OR '.join(calories_filters)) # Add chosen calorie filters to whole filters list
+
+  time_options = {
+    "less30": "(R.TotalTime <= 30)",
+    "30to60": "(R.TotalTime BETWEEN 30 AND 60)",
+    "60to120": "(R.TotalTime BETWEEN 60 AND 120)",
+    "more120": "(R.TotalTime >= 120)"
+  }
+  time_filters = []
+  for time in selected_totaltime:
+    time_filters.append(time_options[time])
+  filters.append(' OR '.join(time_filters)) # Add chosen totaltime filters to whole filters list
+
+  if filters:
+    for filter in filters:
+      query += " AND (" + filter + ")" # Add WHERE conditions to query based on chosen filters
+
+  # Add ORDER BY to query if sugar or rating selected
+  order_clauses = []
+  if order_sugar:
+    order_clauses.append("R.Sugar ASC") # Order recipes by ascending order of sugar
+  if order_rating:
+    order_clauses.append("R.AggregatedRating DESC") # Order recipes by descending order of aggregatedrating
+  if order_clauses:
+    query += " ORDER BY " + ", ".join(order_clauses)
+  
+  # Execute the query
+  cursor = g.conn.execute(text(query), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+  
+  # Process result and render to template based on context
+  if context == "category":
+    filtered_recipes = []
+    for result in results:
+      formatted_time = convert_time(result["totaltime"])
+      filtered_recipes.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"]))
+    cursor.close()
+    context = dict(categoryid=categoryid, categoryname=categoryname, recipes=filtered_recipes)
+    return render_template("category_recipes.html", **context)
+  
+  else:
+    filtered_recipes = {}
+    for result in results:
+      recipe_id = result["recipeid"]
+      if recipe_id not in filtered_recipes: # If it is the first row for a recipe
+        # First, convert total time into ~ hr ~ min
+        formatted_time = convert_time(result["totaltime"])
+        filtered_recipes[recipe_id] = {
+          "recipename": result["recipename"],
+          "displayname": result["displayname"],
+          "categories": [(result["categoryname"], result["categoryid"])],
+          "totaltime": formatted_time, 
+          "aggregatedrating": result["aggregatedrating"], 
+          "calories": result["calories"], 
+          "sugar": result["sugar"]
+          }
+      else: # if recipe_id is already in filtered_recipes (i.e., if recipe belongs to more than one category)
+        filtered_recipes[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+    cursor.close()
+    context = {"recipes": filtered_recipes}
+    return render_template("all_recipes.html", **context)
 
 
 @app.route('/login')

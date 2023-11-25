@@ -717,3 +717,68 @@ if __name__ == '__main__':
 
 c. Usage:
 Copied only the HTML code provided by ChatGPT.
+
+
+13. Asked how to display filtering options for recipes in HTML
+a. Prompt:
+I want to add a functionality of filtering a list of recipes by calories, sugar, aggregatedrating, and totaltime.
+
+More specifically:
+When filtering by calories, I want these options to popup: less than 200, 200-400, 400-600, 600-800, more than 800. Users can choose more than one option, and the recipes would be ordered in ascending order of calories.
+When filtering by sugar, I just want the recipes to be ordered in ascending order of sugar.
+When filtering by aggregatedrating, I want recipes to be ordered in descending order of aggregatedrating.
+When filtering by totaltime, I want these options: less than 30 min, 30 min - 1 hr, 1 hr - 2 hr, more than 2 hr. Users can choose more than one option, and the recipes would be ordered in ascending order of totaltime.
+
+I can handle the backend code using Flask, but could you help me write the frontend HTML template using Jinja2? 
+
+b. Response:
+Implementing such a filtering feature involves a combination of both frontend and backend work. On the frontend, you'll present the user with filter options. On the backend, you'll adjust the SQL query to apply the selected filters and order the recipes accordingly.
+
+Here's a basic example to get you started:
+
+HTML Template for Filter Options
+Let's assume your recipe list template is named recipe_list.html. You'll add a form for the filter options:
+
+<form action="{{ url_for('recipe_list') }}" method="get">
+    <h3>Filter Recipes:</h3>
+    
+    <label>Calories:</label>
+    <select name="calories" multiple>
+        <option value="less200">Less than 200</option>
+        <option value="200to400">200 - 400</option>
+        <option value="400to600">400 - 600</option>
+        <option value="600to800">600 - 800</option>
+        <option value="more800">More than 800</option>
+    </select>
+
+    <label>Sugar:</label>
+    <input type="checkbox" name="sugar" value="true"> Order by Sugar
+
+    <label>Aggregated Rating:</label>
+    <input type="checkbox" name="aggregatedrating" value="true"> Order by Rating
+
+    <label>Total Time:</label>
+    <select name="totaltime" multiple>
+        <option value="less30">Less than 30 min</option>
+        <option value="30to60">30 min - 1 hr</option>
+        <option value="60to120">1 hr - 2 hr</option>
+        <option value="more120">More than 2 hr</option>
+    </select>
+
+    <button type="submit">Apply Filters</button>
+</form>
+
+<!-- Display the list of recipes -->
+
+Backend: Route Function
+In your Flask app, you'll need to modify the route function to handle these filters.
+
+Your route function:
+Extracts filter and sort options from the query string.
+Constructs a SQL query based on the selected filters.
+Orders the results based on the user's selection.
+Fetches the filtered and ordered list of recipes.
+Renders the recipe_list.html template with the recipe data.
+
+c. Usage:
+Copied the HTML code provided by ChatGPT and made minor changes on texts that are displayed. Handled backend side by myself.
