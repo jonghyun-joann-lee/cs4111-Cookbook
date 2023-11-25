@@ -943,8 +943,8 @@ def filter_recipes():
     time_filters.append(time_options[time])
   filters.append(' OR '.join(time_filters)) # Add chosen totaltime filters to whole filters list
 
-  if filters:
-    for filter in filters:
+  for filter in filters:
+    if filter:
       query += " AND (" + filter + ")" # Add WHERE conditions to query based on chosen filters
 
   # Add ORDER BY to query if sugar or rating selected
