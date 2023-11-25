@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Recipe Submission Completed</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <p>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+  </p>
+
+  <h2>Recipe Submission Completed</h2>
+
+  <p>Thank you for submitting your wonderful recipe! We appreciate your input.</p>
+
+  <h4><a href="/">Go to main page</a></h4>
+
+</body>
+
+</html>

@@ -527,6 +527,17 @@ def search_results():
     return render_template("search_results.html", **context)
 
 
+"""
+# Example of adding new data to the database
+@app.route('/add', methods=['POST'])
+def add(): 
+  name = request.form['name']
+  params_dict = {"name":name}
+  g.conn.execute(text('INSERT INTO test(name) VALUES (:name)'), params_dict)
+  g.conn.commit()
+  return redirect('/')
+"""
+
 # Submit a new review (can only be done by signed in users)
 @app.route('/recipe/<int:recipe_id>/submit_review', methods=['GET', 'POST'])
 def submit_review(recipe_id):
@@ -757,22 +768,78 @@ def delete_review(recipe_id, review_number):
 
 
 # Submit a new recipe (can only be done by signed in users)
+@app.route('/recipe/submit_recipe', methods=['GET', 'POST'])
+def submit_recipe():
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to submit a recipe."
+    return render_template("error.html", message=message)
+  
+  if request.method == 'POST':
+    recipename = request.form.get('recipename')
+    preptime = float(request.form.get('preptime'))
+    cooktime = float(request.form.get('cooktime'))
+    totaltime = preptime + cooktime
+    description = request.form.get('description')
+    instructions = request.form.get('instructions')
+    servings = request.form.get('servings')
+    servings = int(servings) if servings else None # Can be left blank -> null
+    calories = request.form.get('calories')
+    calories = float(calories) if calories else None # Can be left blank -> null
+    sugar = request.form.get('sugar')
+    sugar = float(sugar) if sugar else None # Can be left blank -> null
+    datepublished = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Need to generate RecipeID, which will be the current max RecipeID + 1
+    cursor = g.conn.execute(text("""SELECT MAX(R.RecipeID) FROM Recipes_written_by R"""))
+    g.conn.commit()
+    recipeid = None
+    for result in cursor:
+      recipeid = result[0]
+    cursor.close()
+    recipeid += 1 # This will be the RecipeID for this new recipe
 
+    # Insert review into reviews table
+    params_dict = {"RecipeID": recipeid, "RecipeName": recipename, "CookTime": cooktime, "PrepTime": preptime, 
+                   "TotalTime": totaltime, "Description": description, "Instructions": instructions, 
+                   "AggregatedRating": 0, "ReviewCount": 0, "Servings": servings, "Calories": calories, 
+                   "Sugar": sugar, "UserID": user_id, "DatePublished": datepublished}
+    g.conn.execute(text("""INSERT INTO Recipes_written_by(RecipeID, RecipeName, CookTime, PrepTime, TotalTime, Description, Instructions, AggregatedRating, ReviewCount, Servings, Calories, Sugar, UserID, DatePublished)
+                        VALUES (:RecipeID, :RecipeName, :CookTime, :PrepTime, :TotalTime, :Description, :Instructions, :AggregatedRating, :ReviewCount, :Servings, :Calories, :Sugar, :UserID, :DatePublished)"""), 
+                        params_dict)
+    g.conn.commit()
+
+    # Update RecipesWritten in Authors table if current user exists in this table
+    # If not, insert current user into Authors table
+    cursor = g.conn.execute(text("""SELECT COUNT(*)
+                                 FROM Authors A
+                                 WHERE A.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    count = 0
+    for result in cursor:
+      count = result[0]
+    cursor.close()
+
+    if count > 0: # User exists in Authors table 
+      count += 1 # Update RecipesWritten
+      g.conn.execute(text("""UPDATE Authors
+                        SET RecipesWritten = :count
+                        WHERE UserID = :userid"""), {"count": count, "userid": user_id})
+      g.conn.commit()
+    else: # User does not exist in Authors table
+      g.conn.execute(text("""INSERT INTO Authors(UserID, RecipesWritten, Followers)
+                          VALUES (:UserID, :RecipesWritten, :Followers)"""), 
+                          {"UserID": user_id, "RecipesWritten": 1, "Followers": 0})
+      g.conn.commit()
+
+    return render_template('thank_you.html')
+  
+  return render_template('submit_recipe.html')
 
 # Edit an existing recipe (can only be done by the recipe's author)
 
 
 # Delete an existing recipe (can only be done by the recipe's author)
-
-
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add(): 
-  name = request.form['name']
-  params_dict = {"name":name}
-  g.conn.execute(text('INSERT INTO test(name) VALUES (:name)'), params_dict)
-  g.conn.commit()
-  return redirect('/')
 
 
 @app.route('/login')

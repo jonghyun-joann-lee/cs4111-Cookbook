@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Submit Recipe</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <p>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+  </p>
+
+  <h2>Submit a new recipe</h2>
+
+  <form action="{{ url_for('submit_recipe') }}" method="post">
+    <label for="recipename">Recipe Name:</label>
+    <input type="text" id="recipename" name="recipename" maxlength="80" required
+            style="width: 100px; height: 30px; font-size: 16px;"> 
+    <br>
+
+    <label for="preptime">Preparation Time (in minutes):</label>
+    <input type="number" id="preptime" name="preptime" min="0" step="any" required
+            style="width: 60px; height: 30px; font-size: 16px;">
+    <br>
+
+    <label for="cooktime">Cooking Time (in minutes):</label>
+    <input type="number" id="cooktime" name="cooktime" min="0" step="any" required
+            style="width: 60px; height: 30px; font-size: 16px;">
+    <br>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" style="width: 100%; height: 100px; font-size: 16px;"></textarea>
+    <br>
+
+    <label for="instructions">Instructions:</label>
+    <textarea id="instructions" name="instructions" style="width: 100%; height: 200px; font-size: 16px;" required></textarea>
+    <br>
+
+    <label for="servings">Servings:</label>
+    <input type="number" id="servings" name="servings" min="1" step="1" style="width: 50px; height: 30px; font-size: 16px;">
+    <br>
+
+    <label for="calories">Calories:</label>
+    <input type="number" id="calories" name="calories" min="0" step="any" style="width: 60px; height: 30px; font-size: 16px;">
+    <br>
+
+    <label for="sugar">Sugar (in grams):</label>
+    <input type="number" id="sugar" name="sugar" min="0" step="any" style="width: 60px; height: 30px; font-size: 16px;">
+    <br>
+
+    <button type="submit">Submit Recipe</button>
+  </form>
+
+  <!-- Option to go back -->
+  <h4><a href="#" onclick="goBack()">Go to previous page</a></h4>
+  
+  <script>
+  function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location.href = '/'; 
+    }
+    }
+  </script>
+
+</body>
+
+</html>
