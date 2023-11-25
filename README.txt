@@ -396,6 +396,327 @@ Remember that if you use the second approach, you need to ensure that your datab
 Choose the method that best fits your application's design and structure.
 
 c. Usage:
-Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error.
-So implemented the second way of using engine.connect() as conn.
+Implemented the first way of wrapping my code with app.app_context() as suggested by ChatGPT but received an error. So implemented the second way of using engine.connect() as conn.
 
+
+8. Asked how to create a page for submitting review with rating, review content, and submit button
+a. Prompt:
+In HTML, using Jinja2 template and Flask, I am trying to create a page for submitting a new review. I would like the user to input the rating which should be an integer between a minimum value of 1 and maximum value of 5. The user may or may not input content for the review, but there should be a text box for it. Then there would be a submit button saying "Submit Review". I then need to collect the timestamp for the submission date in a format similar to "2008-02-13 0:26:49". How can I write this code in HTML?
+
+b. Response:
+Creating a review submission page using Jinja2 templating in a Flask application involves several steps. You'll need to create an HTML form for the user inputs, including a numeric input for the rating, a text area for the review content, and a submit button. Additionally, you'll handle the timestamp on the server-side when the form is submitted.
+
+Here's a basic example of how you might structure your HTML template using Jinja2:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Review</title>
+</head>
+<body>
+    <form action="/submit_review" method="post">
+        <label for="rating">Rating (1-5):</label>
+        <input type="number" id="rating" name="rating" min="1" max="5" required>
+
+        <label for="reviewContent">Review:</label>
+        <textarea id="reviewContent" name="reviewContent"></textarea>
+
+        <button type="submit">Submit Review</button>
+    </form>
+</body>
+</html>
+
+In this template:
+
+The <form> tag has an action attribute pointing to /submit_review, which is the URL where your Flask app will handle the form submission.
+The <input type="number"> field allows users to enter a numeric rating between 1 and 5.
+The <textarea> field is for the review content. It's optional since you mentioned that the user might not input content.
+The <button type="submit"> is the button to submit the form.
+On the Flask side, you'll handle the form submission and capture the timestamp. Here's a basic example of what the Flask route might look like:
+
+from flask import Flask, request, render_template
+from datetime import datetime
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('review_form.html')
+
+@app.route('/submit_review', methods=['POST'])
+def submit_review():
+    rating = request.form.get('rating')
+    review_content = request.form.get('reviewContent')
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Here, you can save the rating, review_content, and timestamp to a database or process them as needed
+
+    return f"Review submitted with rating: {rating}, content: {review_content}, on: {timestamp}"
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+In this Python script:
+
+The index route renders the review form template.
+The submit_review route handles the POST request from the form. It captures the rating and review content from the form data, and it generates the current timestamp in the specified format.
+Make sure you have Flask installed in your environment, and the template file should be named review_form.html and placed in the templates directory of your Flask project.
+
+c. Usage:
+Directly copied the HTML code provided by ChatGPT with minor change in variable name, and only copied the "timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")" line into the python code.
+
+
+9. Asked how to redirect user to previous page in HTML 
+a. Prompt: 
+In HTML, what should I do if I want to have a link saying "Go to previous page" that will redirect the user to the previous page? If there is no previous page or the previous page is not accessible, I want the user to be redirected to the index page.
+
+b. Response:
+To implement a "Go to previous page" link in HTML that redirects the user to the previous page, and in cases where there is no previous page or it's not accessible, redirects to the index page, you'll need to use a combination of JavaScript and HTML. This requires a bit of scripting to check the history length and decide where to redirect the user.
+
+Here's an example of how you can achieve this:
+
+HTML and JavaScript Code:
+
+<a href="#" onclick="goBack()">Go to previous page</a>
+
+<script>
+function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location.href = '/index'; // Replace '/index' with the path to your index page
+    }
+}
+</script>
+
+Explanation:
+
+The <a> tag is used with an onclick event that calls the goBack() JavaScript function when clicked.
+The goBack() function checks the history.length. If the length is greater than 1, it means there is a previous page in the history, and history.back() is called to go back to that page.
+If history.length is not greater than 1, indicating there's no previous page (or it's the first page in the history), the user is redirected to the index page. You can replace '/index' with the actual path to your index page.
+This approach offers a more user-friendly experience by handling cases where the back history is not available, redirecting users to a default page (like your site's home page) instead.
+
+c. Usage:
+Copied the HTML code provided by ChatGPT into error.html with a minor change in the path to the index page
+
+
+10. Asked how to style HTML to make the input box for rating and review bigger
+a. Prompt:
+Is there any simple way to make the block for the rating and content bigger in this HTML code?
+
+  <form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <!-- Prefill with current rating and content -->
+    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required> 
+    
+    <label for="content">Review:</label>
+    <textarea name="content">{{ review.content }}</textarea>
+    
+    <button type="submit">Update Review</button>
+  </form>
+
+b. Response:
+To make the input for the rating and the content text area larger, you can use CSS to style these elements. You can either include the styles directly in your HTML with the style attribute, or you can define CSS classes in a separate stylesheet and apply them to your elements.
+
+Here's how you can use inline styles to increase the size of the input and textarea:
+
+<form action="{{ url_for('edit_review', recipe_id=recipe_id, review_number=review_number) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <!-- Prefill with current rating and content -->
+    <input type="number" name="rating" value="{{ review.rating }}" min="1" max="5" required 
+           style="width: 100px; height: 30px; font-size: 16px;"> <!-- Increase the width and height as needed -->
+    
+    <label for="content">Review:</label>
+    <textarea name="content" style="width: 100%; height: 150px; font-size: 16px;">{{ review.content }}</textarea>
+    <!-- Increase the width (percentage or pixels), height, and font-size as needed -->
+    
+    <button type="submit" style="font-size: 16px; padding: 10px 20px;">Update Review</button>
+    <!-- Adjust the font size and padding as needed -->
+</form>
+
+In this example:
+
+The width and height properties of the input and textarea have been increased to make them larger. You can adjust these values to suit your needs.
+The font-size property has also been increased to make the text inside the input and textarea larger and more readable.
+For the button, font-size and padding are adjusted to make it more prominent.
+
+Alternatively, if you have a CSS file ... (omitted this part)
+
+c. Usage:
+Copied the code provided by ChatGPT and changed the value for width and height by testing them out
+
+
+11. Asked how to round up float in HTML
+a. Prompt:
+When the aggregated rating is for example like this Aggregated Rating: 3.6666667, I want to round up to 3.7 (1 decimal point). Can I do that in this HTML code where I display it?
+
+  <p>Aggregated Rating: {{ recipe.aggregatedrating }}</p>
+
+b. Response:
+Yes, you can round numbers to a specific number of decimal places in your HTML template using Jinja's format filter. To round the aggregatedrating to one decimal place, you would modify your code like this:
+
+<p>Aggregated Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}</p>
+
+The "{:.1f}".format() is a Python string formatting syntax to round the number to one decimal place. When you use this inside a Jinja template, it will display the aggregatedrating rounded to one decimal place.
+
+c. Usage:
+Copied the code provided by ChatGPT
+
+12. Asked how to make a list of checkboxes for users to choose categories and ingredients when submitting recipe
+a. Prompt:
+I want to provide a list of checkboxes for users to choose categories and ingredients (specifying amount of each - real number) when submitting a recipe to the database in HTML. I am passing the dictionaries categories and ingredients that each contain the id as the key and the name as the value to HTML using Flask and Jinja2. Users can choose multiple categories and multiple ingredients. How can I access these multiple values?
+
+b. Response:
+When dealing with multiple values for checkboxes (like categories) and multiple ingredients with quantities in a Flask application, you need to consider both the frontend (HTML with Jinja2 templating) and the backend (Flask route handling form submission). The approach involves iterating over the dictionaries in the template and properly handling the submitted data in your Flask route.
+
+Frontend: HTML with Jinja2
+Template Setup:
+
+Use Jinja2 to dynamically create checkboxes for categories and fields for ingredients and quantities.
+Form Structure:
+
+For categories, since each checkbox shares the same name attribute, their values will be submitted as a list.
+For ingredients, you can use a naming convention that combines the ingredient ID with a suffix for the quantity.
+Example Template (add_recipe.html):
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Recipe</title>
+</head>
+<body>
+    <form action="/submit-recipe" method="post">
+        <h3>Select Categories:</h3>
+        {% for id, name in categories.items() %}
+        <input type="checkbox" id="category-{{id}}" name="categories" value="{{id}}">
+        <label for="category-{{id}}">{{name}}</label><br>
+        {% endfor %}
+
+        <h3>Ingredients:</h3>
+        {% for id, name in ingredients.items() %}
+        <label for="ingredient-{{id}}">{{name}}:</label>
+        <input type="number" id="amount-{{id}}" name="amount-{{id}}" step="0.01" placeholder="Amount"><br>
+        {% endfor %}
+
+        <button type="submit">Submit Recipe</button>
+    </form>
+</body>
+</html>
+
+Backend: Flask Route Handling
+Handling Form Data:
+
+In your Flask route that handles the form submission, use request.form.getlist for checkboxes to get all selected categories.
+For ingredients and their quantities, iterate over the keys of the form data and parse out the ingredient IDs and corresponding quantities.
+Flask Route Example:
+
+from flask import Flask, request, render_template
+
+app = Flask(__name__)
+
+@app.route('/submit-recipe', methods=['POST'])
+def submit_recipe():
+    selected_categories = request.form.getlist('categories')
+    selected_ingredients = {}
+    for key in request.form.keys():
+        if key.startswith('amount-'):
+            ingredient_id = key.split('-')[1]
+            quantity = request.form[key]
+            if quantity:  # Check if a quantity was actually provided
+                selected_ingredients[ingredient_id] = quantity
+
+    # Process selected_categories and selected_ingredients as needed
+    # ...
+
+    return 'Recipe submitted successfully!'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+c. Usage:
+Copied the HTML code provided by ChatGPT and made some changes to variable names to match with mine. 
+Referred to the Flask code given and wrote my code to match with my variable names and situation.
+
+12-1. Follow up on how to make users choose at least one category and at least one ingredients
+a. Prompt:
+How do I require the user to choose at least one category and at least one ingredient with amount?
+
+b. Response:
+To require users to choose at least one category and at least one ingredient with its corresponding amount in a form, you can use a combination of HTML5 attributes and JavaScript for client-side validation, along with server-side validation in Flask. Here's how to do it:
+
+1. HTML5 Attributes for Basic Validation:
+In your HTML form, use the required attribute for the first checkbox and the first ingredient amount input to ensure that at least one of each is selected or filled. However, this alone won't enforce the requirement for the rest of the dynamically added fields or checkboxes.
+
+2. JavaScript for Enhanced Validation:
+Write a JavaScript function that checks if at least one checkbox is checked and at least one ingredient amount is provided. Attach this function to the form's submit event.
+
+3. Flask for Server-Side Validation:
+Always validate the data on the server side as well to ensure that at least one category and one ingredient with an amount are provided.
+
+Example Implementation:
+HTML and JavaScript:
+
+<script>
+function validateForm() {
+    var checkboxes = document.querySelectorAll('input[name="categories"]:checked');
+    var ingredientsSelected = false;
+
+    document.querySelectorAll('input[name="ingredients"]').forEach(function(checkbox) {
+        var amountInput = document.querySelector('input[name="amount-' + checkbox.value + '"]');
+        if (checkbox.checked && amountInput && amountInput.value) {
+            ingredientsSelected = true;
+        }
+    });
+
+    if (checkboxes.length === 0) {
+        alert('Please select at least one category.');
+        return false;
+    }
+    
+    if (!ingredientsSelected) {
+        alert('Please select at least one ingredient and specify an amount.');
+        return false;
+    }
+    
+    return true;
+}
+</script>
+
+<form action="{{ url_for('submit_recipe') }}" method="post" onsubmit="return validateForm()">
+    <!-- ... your form fields ... -->
+    <button type="submit">Submit Recipe</button>
+</form>
+
+Flask Route:
+
+from flask import Flask, request, render_template
+
+app = Flask(__name__)
+
+@app.route('/submit-recipe', methods=['POST'])
+def submit_recipe():
+    selected_categories = request.form.getlist('categories')
+    selected_ingredients = {}
+    for key in request.form.keys():
+        if key.startswith('amount_'):
+            ingredient_id = key.split('-')[1]
+            quantity = request.form[key]
+            if quantity:
+                selected_ingredients[ingredient_id] = quantity
+
+    if not selected_categories or not selected_ingredients:
+        # Handle error: User did not select a category or ingredient
+        return 'Error: Must select at least one category and one ingredient with amount.'
+
+    # Process the data further as needed
+    # ...
+
+    return 'Recipe submitted successfully!'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+c. Usage:
+Copied only the HTML code provided by ChatGPT.

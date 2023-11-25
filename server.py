@@ -11,7 +11,8 @@ import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort, session
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, url_for
+from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -234,7 +235,6 @@ def index():
 # The functions for each app.route need to have different names
 #
 
-
 # Helper function to convert time into ~ hr ~ min format
 def convert_time(time):
   hours = int(time // 60)
@@ -345,6 +345,7 @@ def recipe_insights(recipe_id):
       formatted_totaltime = convert_time(result["totaltime"])
 
       recipe_details = {
+        "recipeid": result["recipeid"],
         "recipename": result["recipename"],
         "cooktime": formatted_cooktime,
         "preptime": formatted_preptime,
@@ -372,6 +373,7 @@ def recipe_insights(recipe_id):
                                WHERE R.RecipeID = V.RecipeID
                                AND V.UserID = U.UserID AND U.UserID = P.UserID
                                AND R.RecipeID = :recipeid
+                               ORDER BY V.DateSubmitted ASC
                                """), params_dict)
   g.conn.commit()
   results = cursor.mappings().all()
@@ -385,7 +387,8 @@ def recipe_insights(recipe_id):
         "content": result["content"],
         "datesubmitted": result["datesubmitted"],
         "datemodified": result["datemodified"],
-        "author": result["displayname"]
+        "author": result["displayname"],
+        "userid": result["userid"]
       }
 
   cursor.close()
@@ -497,7 +500,6 @@ def search_results():
                          """)
 
     cursor = g.conn.execute(sql_query, {"searchterm": search_term})
-    g.conn.commit()
     results = cursor.mappings().all()
 
     query_results = {}
@@ -525,6 +527,7 @@ def search_results():
     return render_template("search_results.html", **context)
 
 
+"""
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add(): 
@@ -533,6 +536,357 @@ def add():
   g.conn.execute(text('INSERT INTO test(name) VALUES (:name)'), params_dict)
   g.conn.commit()
   return redirect('/')
+"""
+
+# Submit a new review (can only be done by signed in users)
+@app.route('/recipe/<int:recipe_id>/submit_review', methods=['GET', 'POST'])
+def submit_review(recipe_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to submit a review."
+    return render_template("error.html", message=message)
+  
+  if request.method == 'POST':
+    rating = int(request.form.get('rating'))
+    content = request.form.get('content')
+    datesubmitted = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Need to generate ReviewNumber, which will be the current ReviewCount + 1
+    # Also get current AggregatedRating b/c it needs to be updated
+    cursor = g.conn.execute(text("""SELECT R.ReviewCount, R.AggregatedRating
+                                 FROM Recipes_written_by R
+                                 WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+    g.conn.commit()
+    reviewcount = None
+    aggregatedrating = None
+    for result in cursor:
+      reviewcount = result[0]
+      aggregatedrating = result[1]
+    cursor.close()
+    reviewnumber = reviewcount + 1 # This will be ReviewNumber of this review as well as updated ReviewCount
+
+    # Insert review into reviews table
+    params_dict = {"ReviewNumber": reviewnumber, "Rating": rating, "Content": content, 
+                   "DateSubmitted": datesubmitted, "RecipeID": recipe_id, "UserID": user_id}
+    g.conn.execute(text("""INSERT INTO Reviews_created_by_evaluates(ReviewNumber, Rating, Content, DateSubmitted, RecipeID, UserID)
+                        VALUES (:ReviewNumber, :Rating, :Content, :DateSubmitted, :RecipeID, :UserID)"""), params_dict)
+    g.conn.commit()
+
+    # Also update ReviewCount and AggregatedRating in recipes table
+    new_aggregatedrating = (aggregatedrating * reviewcount + rating) / reviewnumber
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET ReviewCount = :reviewnumber, AggregatedRating = :new_aggregatedrating
+                        WHERE RecipeID = :recipeid"""), {"reviewnumber": reviewnumber, "recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating})
+    g.conn.commit()
+
+    # Also update ReviewsWritten in Users table
+    # First, get current ReviewsWritten
+    cursor = g.conn.execute(text("""SELECT U.ReviewsWritten
+                                 FROM Users U
+                                 WHERE U.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    reviewswritten = None
+    for result in cursor:
+      reviewswritten = result[0]
+    cursor.close()
+
+    reviewswritten += 1 # Increment ReviewsWritten by 1
+
+    g.conn.execute(text("""UPDATE Users
+                        SET ReviewsWritten = :reviewswritten
+                        WHERE UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
+    g.conn.commit()
+
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
+
+  # If GET request, direct to review submission page
+  cursor = g.conn.execute(text("""SELECT R.RecipeName 
+                               FROM Recipes_written_by R 
+                               WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+  g.conn.commit()
+  recipename = ""
+  for result in cursor:
+    recipename = result[0]
+  cursor.close()
+  
+  return render_template('submit_review.html', recipe_id=recipe_id, recipename=recipename)
+
+
+# Edit an existing review (can only be done by the review's author)
+@app.route('/recipe/<int:recipe_id>/edit_review/<int:review_number>', methods=['GET', 'POST'])
+def edit_review(recipe_id, review_number):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to edit a review."
+    return render_template("error.html", message=message)
+  
+  # Get the review to be edited to prefill the form and calculate new AggregatedRating
+  cursor = g.conn.execute(text("""
+                               SELECT Rating, Content, UserID
+                               FROM Reviews_created_by_evaluates
+                               WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                               """), {"recipeid": recipe_id, "reviewnumber": review_number})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+
+  if not results:
+    message = "The review does not exist."
+    return render_template("error.html", message=message)
+  
+  review = {}
+  for result in results:
+    if user_id != int(result["userid"]): # Verify that the current user is the author of review
+      message = "You can only edit your own reviews." 
+      return render_template("error.html", message=message)
+    review["rating"] = result["rating"] # Current rating
+    review["content"] = result["content"]
+    review["userid"] = result["userid"]
+  
+  if request.method == 'POST': # Update review based on user input
+    new_rating = int(request.form.get('rating'))
+    new_content = request.form.get('content')
+    datemodified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    params_dict = {"new_rating": new_rating, "new_content": new_content, "datemodified": datemodified,
+                   "recipeid": recipe_id, "reviewnumber": review_number}
+    g.conn.execute(text("""
+                        UPDATE Reviews_created_by_evaluates
+                        SET Rating = :new_rating, Content = :new_content, DateModified = :datemodified
+                        WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                        """), params_dict)
+    g.conn.commit()
+
+    # Update AggregatedRating in recipes table
+    # First, need to get the current AggregatedRating and ReviewCount
+    cursor = g.conn.execute(text("""SELECT R.ReviewCount, R.AggregatedRating
+                                 FROM Recipes_written_by R
+                                 WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+    g.conn.commit()
+    reviewcount = None
+    aggregatedrating = None
+    for result in cursor:
+      reviewcount = result[0]
+      aggregatedrating = result[1]
+    cursor.close()
+
+    new_aggregatedrating = (aggregatedrating * reviewcount - review["rating"] + new_rating) / reviewcount
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET AggregatedRating = :new_aggregatedrating
+                        WHERE RecipeID = :recipeid"""), {"recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating})
+    g.conn.commit()
+
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
+  
+  return render_template('edit_review.html', review=review, recipe_id=recipe_id, review_number=review_number)
+  
+
+# Delete an existing review (can only be done by the review's author)
+@app.route('/recipe/<int:recipe_id>/delete_review/<int:review_number>', methods=['GET', 'POST'])
+def delete_review(recipe_id, review_number):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to delete a review."
+    return render_template("error.html", message=message)
+  
+  # Get the review to be edited to prefill the form and calculate new AggregatedRating
+  cursor = g.conn.execute(text("""
+                               SELECT Rating, Content, UserID
+                               FROM Reviews_created_by_evaluates
+                               WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                               """), {"recipeid": recipe_id, "reviewnumber": review_number})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+
+  if not results:
+    message = "The review does not exist."
+    return render_template("error.html", message=message)
+  
+  review = {}
+  for result in results:
+    if user_id != int(result["userid"]): # Verify that the current user is the author of review
+      message = "You can only delete your own reviews." 
+      return render_template("error.html", message=message)
+    review["rating"] = result["rating"] # Current rating
+    review["content"] = result["content"]
+    review["userid"] = result["userid"]
+
+  if request.method == 'POST': # Delete review if user confirms it
+    
+    g.conn.execute(text("""
+                        DELETE FROM Reviews_created_by_evaluates
+                        WHERE RecipeID = :recipeid AND ReviewNumber = :reviewnumber
+                        """), {"recipeid": recipe_id, "reviewnumber": review_number})
+    g.conn.commit()
+
+    # Update AggregatedRating and ReviewCount in recipes table
+    # First, need to get the current AggregatedRating and ReviewCount
+    cursor = g.conn.execute(text("""SELECT R.ReviewCount, R.AggregatedRating
+                                 FROM Recipes_written_by R
+                                 WHERE R.RecipeID = :recipeid"""), {"recipeid": recipe_id})
+    g.conn.commit()
+    reviewcount = None
+    aggregatedrating = None
+    for result in cursor:
+      reviewcount = result[0]
+      aggregatedrating = result[1]
+    cursor.close()
+    
+    new_reviewcount = reviewcount - 1
+    if new_reviewcount > 0:
+      new_aggregatedrating = (aggregatedrating * reviewcount - review["rating"]) / new_reviewcount
+    else: # If no review left
+      new_aggregatedrating = 0
+    g.conn.execute(text("""UPDATE Recipes_written_by
+                        SET AggregatedRating = :new_aggregatedrating, ReviewCount = :new_reviewcount
+                        WHERE RecipeID = :recipeid"""), 
+                        {"recipeid": recipe_id, "new_aggregatedrating": new_aggregatedrating, "new_reviewcount": new_reviewcount})
+    g.conn.commit()
+
+    # Also update ReviewsWritten in Users table
+    # First, get current ReviewsWritten
+    cursor = g.conn.execute(text("""SELECT U.ReviewsWritten
+                                 FROM Users U
+                                 WHERE U.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    reviewswritten = None
+    for result in cursor:
+      reviewswritten = result[0]
+    cursor.close()
+
+    reviewswritten -= 1 # Decrement ReviewsWritten by 1
+
+    g.conn.execute(text("""UPDATE Users
+                        SET ReviewsWritten = :reviewswritten
+                        WHERE UserID = :userid"""), {"reviewswritten": reviewswritten, "userid": user_id})
+    g.conn.commit()
+
+    return redirect(url_for('recipe_insights', recipe_id=recipe_id))
+  
+  return render_template('delete_review.html', review=review, recipe_id=recipe_id, review_number=review_number)
+
+
+# Submit a new recipe (can only be done by signed in users)
+@app.route('/recipe/submit_recipe', methods=['GET', 'POST'])
+def submit_recipe():
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to submit a recipe."
+    return render_template("error.html", message=message)
+  
+  if request.method == 'POST':
+    # Update RecipesWritten in Authors table if current user exists in this table
+    # If not, insert current user into Authors table (should be done first to not violate FOREIGN KEY constraint in recipes)
+    cursor = g.conn.execute(text("""SELECT A.RecipesWritten
+                                 FROM Authors A
+                                 WHERE A.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    recipeswritten = 0
+    for result in cursor:
+      recipeswritten = result[0]
+    cursor.close()
+
+    if recipeswritten > 0: # User exists in Authors table 
+      recipeswritten += 1 # Update RecipesWritten
+      g.conn.execute(text("""UPDATE Authors
+                        SET RecipesWritten = :recipeswritten
+                        WHERE UserID = :userid"""), {"recipeswritten": recipeswritten, "userid": user_id})
+      g.conn.commit()
+    else: # User does not exist in Authors table
+      g.conn.execute(text("""INSERT INTO Authors(UserID, RecipesWritten, Followers)
+                          VALUES (:UserID, :RecipesWritten, :Followers)"""), 
+                          {"UserID": user_id, "RecipesWritten": 1, "Followers": 0})
+      g.conn.commit()
+
+    # Insert into recipes table
+    recipename = request.form.get('recipename')
+    prep_hours = int(request.form.get('prep_hours'))
+    prep_minutes = int(request.form.get('prep_minutes'))
+    preptime = prep_hours * 60 + prep_minutes
+    cook_hours = int(request.form.get('cook_hours'))
+    cook_minutes = int(request.form.get('cook_minutes'))
+    cooktime = cook_hours * 60 + cook_minutes
+    totaltime = preptime + cooktime
+    description = request.form.get('description')
+    instructions = request.form.get('instructions')
+    servings = request.form.get('servings')
+    servings = int(servings) if servings else None # Can be left blank -> null
+    calories = request.form.get('calories')
+    calories = float(calories) if calories else None # Can be left blank -> null
+    sugar = request.form.get('sugar')
+    sugar = float(sugar) if sugar else None # Can be left blank -> null
+    datepublished = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Need to generate RecipeID, which will be the current max RecipeID + 1
+    cursor = g.conn.execute(text("""SELECT MAX(R.RecipeID) FROM Recipes_written_by R"""))
+    g.conn.commit()
+    recipeid = None
+    for result in cursor:
+      recipeid = result[0]
+    cursor.close()
+    recipeid += 1 # This will be the RecipeID for this new recipe
+
+    params_dict = {"RecipeID": recipeid, "RecipeName": recipename, "CookTime": cooktime, "PrepTime": preptime, 
+                   "TotalTime": totaltime, "Description": description, "Instructions": instructions, 
+                   "AggregatedRating": 0, "ReviewCount": 0, "Servings": servings, "Calories": calories, 
+                   "Sugar": sugar, "UserID": user_id, "DatePublished": datepublished}
+    g.conn.execute(text("""INSERT INTO Recipes_written_by(RecipeID, RecipeName, CookTime, PrepTime, TotalTime, Description, Instructions, AggregatedRating, ReviewCount, Servings, Calories, Sugar, UserID, DatePublished)
+                        VALUES (:RecipeID, :RecipeName, :CookTime, :PrepTime, :TotalTime, :Description, :Instructions, :AggregatedRating, :ReviewCount, :Servings, :Calories, :Sugar, :UserID, :DatePublished)"""), 
+                        params_dict)
+    g.conn.commit()
+
+    # Insert into belongs_to table for Categories
+    selected_categories = request.form.getlist('categories')
+    for categoryid in selected_categories:
+      g.conn.execute(text("""
+                          INSERT INTO belongs_to(RecipeID, CategoryID)
+                          VALUES (:RecipeID, :CategoryID)
+                          """), {"RecipeID": recipeid, "CategoryID": categoryid})
+      g.conn.commit()
+
+    # Insert into uses table for Ingredients
+    selected_ingredients = request.form.getlist('ingredients')
+    for ingredientid in selected_ingredients:
+      amount_key = 'amount-' + ingredientid
+      amount_value = request.form.get(amount_key)
+      if amount_value:
+        amount = float(amount_value)
+        g.conn.execute(text("""INSERT INTO uses (RecipeID, IngredientID, ItemAmount)
+                              VALUES (:RecipeID, :IngredientID, :ItemAmount)"""), 
+                              {"RecipeID": recipeid, "IngredientID": ingredientid, "ItemAmount": amount})
+        g.conn.commit()
+
+    return render_template('thank_you.html')
+  
+  # Get a list of all categories
+  cursor = g.conn.execute(text("""SELECT * FROM Categories ORDER BY CategoryName ASC"""))
+  g.conn.commit()
+  results = cursor.mappings().all()
+  categories = {}
+  for result in results:
+    categoryid = result["categoryid"]
+    if categoryid not in categories:
+      categories[categoryid] = result["categoryname"]
+  cursor.close()
+
+  # Get a list of all ingredients
+  cursor = g.conn.execute(text("""SELECT * FROM Ingredients ORDER BY IngredientName ASC"""))
+  g.conn.commit()
+  results = cursor.mappings().all()
+  ingredients = {}
+  for result in results:
+    ingredientid = result["ingredientid"]
+    if ingredientid not in ingredients:
+      ingredients[ingredientid] = result["ingredientname"]
+  cursor.close()
+
+  return render_template('submit_recipe.html', categories=categories, ingredients=ingredients)
+
+# Edit an existing recipe (can only be done by the recipe's author)
+
+
+# Delete an existing recipe (can only be done by the recipe's author)
 
 
 @app.route('/login')

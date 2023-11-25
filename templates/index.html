@@ -57,11 +57,13 @@
   <h2>Top 5 Recipes</h2>
   <div>
     {% for recipe in recipes %}
-    <div><a href="/recipe/{{ recipe[3] }}">{{recipe[0]}}</a> by {{recipe[1]}} - Rating: {{recipe[2]}}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
+    <div><a href="/recipe/{{ recipe[3] }}">{{recipe[0]}}</a> by {{recipe[1]}} - Rating: {{ "{:.1f}".format(recipe[2]) }}</div> <!-- {RecipeName} by {Author} - Rating: {AggregatedRating} -->
     {% endfor %}
   </div>
 
   <h2><a href="recipes">All recipes</a></h2>
+
+  <h3><a href="{{ url_for('submit_recipe') }}">Submit a new recipe</a></h3>
 
 </body>
 

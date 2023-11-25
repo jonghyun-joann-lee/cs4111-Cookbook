@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Submit Review </title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <p>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}
+  </p>
+
+  <h2>Submit a new review for {{ recipename }}</h2>
+
+  <form action="{{ url_for('submit_review', recipe_id=recipe_id) }}" method="post">
+    <label for="rating">Rating (1-5):</label>
+    <input type="number" id="rating" name="rating" min="1" max="5" required
+            style="width: 30px; height: 30px; font-size: 16px;"> 
+    <br>
+    <label for="content">Review:</label>
+    <textarea id="content" name="content" style="width: 100%; height: 150px; font-size: 16px;"></textarea>
+
+    <button type="submit" style="font-size: 16px; padding: 10px 20px;">Submit Review</button>
+  </form>
+
+  <!-- Option to go back -->
+  <h4><a href="#" onclick="goBack()">Go to previous page</a></h4>
+  
+  <script>
+  function goBack() {
+    if (history.length > 1) {
+        history.back();
+    } else {
+        window.location.href = '/'; 
+    }
+    }
+  </script>
+
+</body>
+
+</html>
