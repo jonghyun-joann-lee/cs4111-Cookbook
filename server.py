@@ -1081,8 +1081,7 @@ def remove_bookmark(recipe_id):
                       WHERE UserID = :userid AND RecipeID = :recipeid"""), 
                       {"userid": user_id, "recipeid": recipe_id})
   g.conn.commit()
-  message = "Recipe removed from your bookmark successfully."
-  return render_template("bookmark_message.html", message=message)
+  return redirect(url_for('view_bookmarks'))
 
 
 # View bookmarked recipes
