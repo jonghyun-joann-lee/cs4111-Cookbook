@@ -1028,7 +1028,7 @@ def user_profile(user_id):
   # Get additional details if user is in Authors
   cursor = g.conn.execute(text("""SELECT * FROM Authors A WHERE A.UserID = :userid"""), 
                           {"userid": user_id})
-  g.conn.coommit()
+  g.conn.commit()
   results = cursor.mappings().all()
 
   author = {}
