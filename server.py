@@ -777,8 +777,12 @@ def submit_recipe():
   
   if request.method == 'POST':
     recipename = request.form.get('recipename')
-    preptime = float(request.form.get('preptime'))
-    cooktime = float(request.form.get('cooktime'))
+    prep_hours = int(request.form.get('prep_hours'))
+    prep_minutes = int(request.form.get('prep_minutes'))
+    preptime = prep_hours * 60 + prep_minutes
+    cook_hours = int(request.form.get('cook_hours'))
+    cook_minutes = int(request.form.get('cook_minutes'))
+    cooktime = cook_hours * 60 + cook_minutes
     totaltime = preptime + cooktime
     description = request.form.get('description')
     instructions = request.form.get('instructions')

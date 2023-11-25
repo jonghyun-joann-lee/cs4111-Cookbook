@@ -27,18 +27,25 @@
   <form action="{{ url_for('submit_recipe') }}" method="post">
     <label for="recipename">Recipe Name:</label>
     <input type="text" id="recipename" name="recipename" maxlength="80" required
-            style="width: 100px; height: 30px; font-size: 16px;"> 
+            style="width: 400px; height: 30px; font-size: 16px;"> 
+    <br>
     <br>
 
-    <label for="preptime">Preparation Time (in minutes):</label>
-    <input type="number" id="preptime" name="preptime" min="0" step="any" required
-            style="width: 60px; height: 30px; font-size: 16px;">
+    <label for="prep_hours">Preparation Time:</label>
+    <input type="number" id="prep_hours" name="prep_hours" min="0" placeholder="hours" required 
+           style="width: 50px; height: 30px; font-size: 16px;"> 
+    <input type="number" id="prep_minutes" name="prep_minutes" min="0" max="59" placeholder="minutes" required 
+           style="width: 50px; height: 30px; font-size: 16px;">
     <br>
-
-    <label for="cooktime">Cooking Time (in minutes):</label>
-    <input type="number" id="cooktime" name="cooktime" min="0" step="any" required
-            style="width: 60px; height: 30px; font-size: 16px;">
     <br>
+    
+    <label for="cook_hours">Cooking Time:</label>
+    <input type="number" id="cook_hours" name="cook_hours" min="0" placeholder="hours" required 
+           style="width: 50px; height: 30px; font-size: 16px;"> 
+    <input type="number" id="cook_minutes" name="cook_minutes" min="0" max="59" placeholder="minutes" required 
+           style="width: 50px; height: 30px; font-size: 16px;">
+    <br>
+    <br>  
 
     <label for="description">Description:</label>
     <textarea id="description" name="description" style="width: 100%; height: 100px; font-size: 16px;"></textarea>
@@ -51,16 +58,19 @@
     <label for="servings">Servings:</label>
     <input type="number" id="servings" name="servings" min="1" step="1" style="width: 50px; height: 30px; font-size: 16px;">
     <br>
+    <br>
 
     <label for="calories">Calories:</label>
-    <input type="number" id="calories" name="calories" min="0" step="any" style="width: 60px; height: 30px; font-size: 16px;">
+    <input type="number" id="calories" name="calories" min="0" step="any" style="width: 70px; height: 30px; font-size: 16px;">
+    <br>
     <br>
 
     <label for="sugar">Sugar (in grams):</label>
-    <input type="number" id="sugar" name="sugar" min="0" step="any" style="width: 60px; height: 30px; font-size: 16px;">
+    <input type="number" id="sugar" name="sugar" min="0" step="any" style="width: 70px; height: 30px; font-size: 16px;">
+    <br>
     <br>
 
-    <button type="submit">Submit Recipe</button>
+    <button type="submit" style="font-size: 16px; padding: 10px 20px;">Submit Recipe</button>
   </form>
 
   <!-- Option to go back -->
