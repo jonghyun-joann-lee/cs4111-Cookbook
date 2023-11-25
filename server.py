@@ -29,7 +29,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #     DATABASEURI = "postgresql://gravano:foobar@34.75.94.195/proj1part2"
 #     New server: 34.74.171.121
 #
-DATABASEURI = "postgresql://jl6509:6509@34.74.171.121/proj1part2"
+DATABASEURI = "postgresql://jl6509:6509@34.23.246.0/proj1part2"
 
 #
 # This line creates a database engine that knows how to connect to the URI above.
