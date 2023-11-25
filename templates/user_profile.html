@@ -39,8 +39,18 @@
   <p><strong>Reviews Written:</strong> {{ user.reviewswritten }}</p>
   <p><strong>Following:</strong> {{ user.following }}</p>
   {% if author %} <!-- Display these info if the user is an author -->
-  <p><strong>Recipes Written:</strong> {{ author.recipeswritten }}</p>
-  <p><strong>Followers:</strong> {{ author.followers }}</p>
+    <p><strong>Recipes Written:</strong> {{ author.recipeswritten }}</p>
+    <p><strong>Followers:</strong> {{ author.followers }}</p>
+    {% if current_id and current_id != author_id} <!-- If current user selected and current user != author -->
+        {% if is_following %} <!-- If current user already following author -->
+            <form action="{{ url_for('unfollow_author', author_id=author_id) }}" method="post">
+                <button type="submit">Unfollow</button>
+            </form>
+        {% else %} <!-- If current user not following author -->
+            <form action="{{ url_for('follow_author', author_id=author_id) }}" method="post">
+                <button type="submit">Follow</button>
+            </form>
+        {% endif %}
   {% endif %}
 
   <br>

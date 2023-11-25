@@ -1000,8 +1000,9 @@ def filter_recipes():
 
 # User profile page to display user-related information
 @app.route('/user_profile/<int:user_id>')
-def user_profile(user_id):
-  if not session.get('user_id'): # If no user selected
+def user_profile(user_id): # user_id is the id of the user this profile is displaying
+  current_id = session.get('user_id') # current_id is the id of the current session's user
+  if not current_id: # If no user selected
     message = "You must select a user to view user profiles."
     return render_template("error.html", message=message)
   
@@ -1041,7 +1042,21 @@ def user_profile(user_id):
     author["followers"] = result["followers"]
   cursor.close()
 
-  return render_template("user_profile.html", user=user, author=author)
+  # Display Follow/Unfollow button if user is in Authors
+  is_following = False
+  if current_id and author:
+    # Check if the current user is following the author -> Display unfollow button
+    # If not -> Display follow button
+    cursor = g.conn.execute(text("""SELECT * FROM follows
+                               WHERE FollowerID = :userid AND FolloweeID = :authorid"""),
+                               {"userid": current_id, "authorid": user_id})
+    g.conn.commit()
+    results = cursor.mappings().all()
+    cursor.close()
+    if results:
+      is_following = True
+
+  return render_template("user_profile.html", user=user, author=author, current_id=current_id, author_id=user_id, is_following=is_following)
 
 
 # Allow users to bookmark favorite recipes 
@@ -1132,6 +1147,74 @@ def view_bookmarks():
   
   context = {"recipes": all_recipes}
   return render_template("view_bookmarks.html", **context)
+
+
+# Users can follow Authors
+@app.route('/follow_author/<int:author_id>', methods=['POST'])
+def follow_author(author_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to follow authors."
+    return render_template("error.html", message=message)
+  
+  if user_id == author_id: # If user tries to follow themselves
+    message = "You cannot follow yourself."
+    return render_template("error.html", message=message)
+  
+  # Check if the user is already following the author
+  cursor = g.conn.execute(text("""SELECT * FROM follows
+                               WHERE FollowerID = :userid AND FolloweeID = :authorid"""),
+                               {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  if results:
+    message = "You are already following this author."
+    return render_template("error.html", message=message)
+  
+  # If not, insert into follows table
+  g.conn.execute(text("""INSERT INTO follows (FollowerID, FolloweeID) VALUES (:userid, :authorid)"""), 
+                 {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+
+  # Update Following count for user
+  g.conn.execute(text("""UPDATE Users SET Following = Following + 1 WHERE UserID = :userid"""), 
+                 {"userid": user_id})
+  g.conn.commit()
+
+  # Update Followers count for author
+  g.conn.execute(text("""UPDATE Authors SET Followers = Followers + 1 WHERE UserID = :authorid"""), 
+                 {"authorid": author_id})
+  g.conn.commit()
+
+  return redirect(url_for('user_profile', user_id=author_id))
+
+
+# Users can unfollow Authors
+@app.route('/unfollow_author/<int:author_id>', methods=['POST'])
+def unfollow_author(author_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to unfollow authors."
+    return render_template("error.html", message=message)
+  
+  # Delete relationship from follows table
+  g.conn.execute(text("""DELETE FROM follows 
+                      WHERE FollowerID = :userid AND FolloweeID = :authorid"""), 
+                      {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+
+  # Update Following count for user
+  g.conn.execute(text("""UPDATE Users SET Following = Following - 1 WHERE UserID = :userid"""), 
+                 {"userid": user_id})
+  g.conn.commit()
+
+  # Update Followers count for author
+  g.conn.execute(text("""UPDATE Authors SET Followers = Followers - 1 WHERE UserID = :authorid"""), 
+                 {"authorid": author_id})
+  g.conn.commit()
+
+  return redirect(url_for('user_profile', user_id=author_id))
 
 
 @app.route('/login')
