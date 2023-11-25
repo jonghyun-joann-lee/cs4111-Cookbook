@@ -811,20 +811,20 @@ def submit_recipe():
 
     # Update RecipesWritten in Authors table if current user exists in this table
     # If not, insert current user into Authors table
-    cursor = g.conn.execute(text("""SELECT COUNT(*)
+    cursor = g.conn.execute(text("""SELECT A.RecipesWritten
                                  FROM Authors A
                                  WHERE A.UserID = :userid"""), {"userid": user_id})
     g.conn.commit()
-    count = 0
+    recipeswritten = 0
     for result in cursor:
-      count = result[0]
+      recipeswritten = result[0]
     cursor.close()
 
-    if count > 0: # User exists in Authors table 
-      count += 1 # Update RecipesWritten
+    if recipeswritten > 0: # User exists in Authors table 
+      recipeswritten += 1 # Update RecipesWritten
       g.conn.execute(text("""UPDATE Authors
-                        SET RecipesWritten = :count
-                        WHERE UserID = :userid"""), {"count": count, "userid": user_id})
+                        SET RecipesWritten = :recipeswritten
+                        WHERE UserID = :userid"""), {"recipeswritten": recipeswritten, "userid": user_id})
       g.conn.commit()
     else: # User does not exist in Authors table
       g.conn.execute(text("""INSERT INTO Authors(UserID, RecipesWritten, Followers)
