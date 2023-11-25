@@ -949,10 +949,10 @@ def filter_recipes():
 
   # Add ORDER BY to query if sugar or rating selected
   order_clauses = []
-  if order_sugar:
-    order_clauses.append("R.Sugar ASC") # Order recipes by ascending order of sugar
   if order_rating:
     order_clauses.append("R.AggregatedRating DESC") # Order recipes by descending order of aggregatedrating
+  if order_sugar:
+    order_clauses.append("R.Sugar ASC") # Order recipes by ascending order of sugar 
   if order_clauses:
     query += " ORDER BY " + ", ".join(order_clauses)
   
