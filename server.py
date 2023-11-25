@@ -1001,6 +1001,10 @@ def filter_recipes():
 # User profile page to display user-related information
 @app.route('/user_profile/<int:user_id>')
 def user_profile(user_id):
+  if not session.get('user_id'): # If no user selected
+    message = "You must select a user to view user profiles."
+    return render_template("error.html", message=message)
+  
   # Get all basic information about user
   cursor = g.conn.execute(text("""SELECT *
                                FROM Users U, People P
