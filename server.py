@@ -905,6 +905,8 @@ def filter_recipes():
             WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
             AND R.UserID = A.UserID AND A.UserID = P.UserID"""
     params_dict = {}
+  
+  print(query)
 
   # Get filter options from user
   selected_calories = request.args.getlist('calories')
