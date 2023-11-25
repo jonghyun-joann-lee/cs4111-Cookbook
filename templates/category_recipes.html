@@ -36,6 +36,10 @@
 
   <h2>{{categoryname}} Recipes</h2>
 
+  <!-- Add this inside your template for debugging -->
+    <p>Debug: Category ID: {{ categoryid }}, Category Name: {{ categoryname }}</p>
+
+
   {% if recipes %}
   <form action="{{ url_for('filter_recipes', context='category', categoryid=categoryid, categoryname=categoryname) }}" method="get">
     <h3>Filter recipes by</h3>
