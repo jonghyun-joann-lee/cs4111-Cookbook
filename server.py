@@ -1006,7 +1006,7 @@ def user_profile(user_id):
                                FROM Users U, People P
                                WHERE U.UserID = P.UserID AND U.UserID = :userid
                                """), {"userid": user_id})
-  g.conn.coommit()
+  g.conn.commit()
   results = cursor.mappings().all()
 
   if not results:
