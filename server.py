@@ -776,6 +776,29 @@ def submit_recipe():
     return render_template("error.html", message=message)
   
   if request.method == 'POST':
+    # Update RecipesWritten in Authors table if current user exists in this table
+    # If not, insert current user into Authors table (should be done first to not violate FOREIGN KEY constraint in recipes)
+    cursor = g.conn.execute(text("""SELECT A.RecipesWritten
+                                 FROM Authors A
+                                 WHERE A.UserID = :userid"""), {"userid": user_id})
+    g.conn.commit()
+    recipeswritten = 0
+    for result in cursor:
+      recipeswritten = result[0]
+    cursor.close()
+
+    if recipeswritten > 0: # User exists in Authors table 
+      recipeswritten += 1 # Update RecipesWritten
+      g.conn.execute(text("""UPDATE Authors
+                        SET RecipesWritten = :recipeswritten
+                        WHERE UserID = :userid"""), {"recipeswritten": recipeswritten, "userid": user_id})
+      g.conn.commit()
+    else: # User does not exist in Authors table
+      g.conn.execute(text("""INSERT INTO Authors(UserID, RecipesWritten, Followers)
+                          VALUES (:UserID, :RecipesWritten, :Followers)"""), 
+                          {"UserID": user_id, "RecipesWritten": 1, "Followers": 0})
+      g.conn.commit()
+
     # Insert into recipes table
     recipename = request.form.get('recipename')
     prep_hours = int(request.form.get('prep_hours'))
@@ -833,33 +856,10 @@ def submit_recipe():
                                     {"RecipeID": recipeid, "IngredientID": ingredientid, "ItemAmount": amount})
                 g.conn.commit()
 
-    # Update RecipesWritten in Authors table if current user exists in this table
-    # If not, insert current user into Authors table
-    cursor = g.conn.execute(text("""SELECT A.RecipesWritten
-                                 FROM Authors A
-                                 WHERE A.UserID = :userid"""), {"userid": user_id})
-    g.conn.commit()
-    recipeswritten = 0
-    for result in cursor:
-      recipeswritten = result[0]
-    cursor.close()
-
-    if recipeswritten > 0: # User exists in Authors table 
-      recipeswritten += 1 # Update RecipesWritten
-      g.conn.execute(text("""UPDATE Authors
-                        SET RecipesWritten = :recipeswritten
-                        WHERE UserID = :userid"""), {"recipeswritten": recipeswritten, "userid": user_id})
-      g.conn.commit()
-    else: # User does not exist in Authors table
-      g.conn.execute(text("""INSERT INTO Authors(UserID, RecipesWritten, Followers)
-                          VALUES (:UserID, :RecipesWritten, :Followers)"""), 
-                          {"UserID": user_id, "RecipesWritten": 1, "Followers": 0})
-      g.conn.commit()
-
     return render_template('thank_you.html')
   
   # Get a list of all categories
-  cursor = g.conn.execute(text("""SELECT * FROM Categories"""))
+  cursor = g.conn.execute(text("""SELECT * FROM Categories ORDER BY CategoryName ASC"""))
   g.conn.commit()
   results = cursor.mappings().all()
   categories = {}
@@ -870,7 +870,7 @@ def submit_recipe():
   cursor.close()
 
   # Get a list of all ingredients
-  cursor = g.conn.execute(text("""SELECT * FROM Ingredients"""))
+  cursor = g.conn.execute(text("""SELECT * FROM Ingredients ORDER BY IngredientName ASC"""))
   g.conn.commit()
   results = cursor.mappings().all()
   ingredients = {}
