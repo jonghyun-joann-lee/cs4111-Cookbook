@@ -847,7 +847,7 @@ def submit_recipe():
 
     # Insert into uses table for Ingredients
     for key in request.form:
-        if key.startswith('amount-'):
+        if key.startswith('amount-') and request.form[key]:
             ingredientid = int(key.split('-')[1])
             amount = float(request.form[key])
             if request.form.get('ingredient-' + str(ingredientid)):
