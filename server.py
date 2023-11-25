@@ -846,15 +846,16 @@ def submit_recipe():
       g.conn.commit()
 
     # Insert into uses table for Ingredients
-    for key in request.form:
-        if key.startswith('amount-') and request.form[key]:
-            ingredientid = int(key.split('-')[1])
-            amount = float(request.form[key])
-            if request.form.get('ingredient-' + str(ingredientid)):
-                g.conn.execute(text("""INSERT INTO uses (RecipeID, IngredientID, ItemAmount)
-                                    VALUES (:RecipeID, :IngredientID, :ItemAmount)"""), 
-                                    {"RecipeID": recipeid, "IngredientID": ingredientid, "ItemAmount": amount})
-                g.conn.commit()
+    selected_ingredients = request.form.getlist('ingredients')
+    for ingredientid in selected_ingredients:
+      amount_key = 'amount-' + ingredientid
+      amount_value = request.form.get(amount_key)
+      if amount_value:
+        amount = float(amount_value)
+        g.conn.execute(text("""INSERT INTO uses (RecipeID, IngredientID, ItemAmount)
+                              VALUES (:RecipeID, :IngredientID, :ItemAmount)"""), 
+                              {"RecipeID": recipeid, "IngredientID": ingredientid, "ItemAmount": amount})
+        g.conn.commit()
 
     return render_template('thank_you.html')
   
