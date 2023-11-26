@@ -42,7 +42,7 @@
         {% for recipeid, recipe in recommendations.items() %}
             <li>
                 <a href="{{ url_for('recipe_insights', recipe_id=recipeid) }}">{{ recipe.recipename }}</a>
-                by {{ recipe.authorname }} - Rating: {{ recipe.aggregatedrating }}
+                by {{ recipe.authorname }} - Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}
             </li>
         {% endfor %}
     </ul>
