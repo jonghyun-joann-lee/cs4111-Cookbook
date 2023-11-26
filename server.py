@@ -1285,7 +1285,7 @@ def recipe_recommendations():
   count = 5 - len(recommendations)
   if count > 0:
     cursor = g.conn.execute(text("""SELECT R.RecipeID, R.RecipeName, R.AggregatedRating, P.DisplayName
-                               FROM Recipes_written_by R, Authors A, People P, 
+                               FROM Recipes_written_by R, Authors A, People P 
                                WHERE R.UserID = A.UserID AND A.UserID = P.UserID
                                ORDER BY R.AggregatedRating DESC, R.RecipeID DESC
                                LIMIT 5"""))
@@ -1300,7 +1300,7 @@ def recipe_recommendations():
           "aggregatedrating": result["aggregatedrating"],
           "authorname": result["displayname"]
         }
-        
+
   return render_template("recommendations.html", recommendations=recommendations)
 
 
