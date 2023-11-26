@@ -1217,6 +1217,42 @@ def unfollow_author(author_id):
   return redirect(url_for('user_profile', user_id=author_id))
 
 
+# View following list
+@app.route('/user_following/<int:user_id>')
+def user_following(user_id):
+  cursor = g.conn.execute(text("""SELECT F.FolloweeID, P.DisplayName
+                               FROM follows F, People P
+                               WHERE F.FolloweeID = P.UserID AND F.FollowerID = :userid"""), 
+                               {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  following = {}
+  for result in results:
+    followeeid = result["followeeid"]
+    following[followeeid] = result["displayname"]
+  
+  return render_template('following_list.html', following=following, user_id=user_id)
+
+
+# View followers list
+@app.route('/user_followers/<int:user_id>')
+def user_followers(user_id):
+  cursor = g.conn.execute(text("""SELECT F.FollowerID, P.DisplayName
+                               FROM follows F, People P
+                               WHERE F.FollowerID = P.UserID AND F.FolloweeID = :userid"""), 
+                               {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  followers = {}
+  for result in results:
+    followerid = result["followerid"]
+    followers[followerid] = result["displayname"]
+  
+  return render_template('followers_list.html', followers=followers, user_id=user_id)
+
+
 @app.route('/login')
 def login():
     abort(401)

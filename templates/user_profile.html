@@ -62,6 +62,8 @@
     <p><strong>Email:</strong> {{ user.email }}</p>
     <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
     <p><a href="{{ url_for('view_bookmarks') }}">My Bookmarks</a></p>
+    <p><a href="{{ url_for('user_following', user_id=user.userid) }}">Following</a></p>
+    <p><a href="{{ url_for('user_followers', user_id=user.userid) }}">Followers</a></p>
   {% endif %}
 
   <br>
