@@ -1253,6 +1253,57 @@ def user_followers(user_id):
   return render_template('followers_list.html', followers=followers, user_id=user_id)
 
 
+# A simple recipe recommendation list (of 5 recipes) based on following list and/or top recipes
+@app.route('/recipe_recommendations')
+def recipe_recommendations():
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to see recommendations."
+    return render_template("error.html", message=message)
+  
+  # Get recipes written by authors whom the current user follows
+  cursor = g.conn.execute(text("""SELECT R.RecipeID, R.RecipeName, R.AggregatedRating, P.DisplayName
+                               FROM Recipes_written_by R, Authors A, People P, follows F
+                               WHERE R.UserID = A.UserID AND A.UserID = P.UserID
+                               AND F.FolloweeID = A.UserID AND F.FollowerID = :userid 
+                               LIMIT 5"""), {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  recommendations = {}
+  for result in results:
+    recipeid = result["recipeid"]
+    if recipeid not in recommendations:
+      recommendations[recipeid] = {
+        "recipename": result["recipename"],
+        "aggregatedrating": result["aggregatedrating"],
+        "authorname": result["displayname"]
+      }
+  
+  # If recommendations based on following list is less than 5
+  # add recommendations based on highest aggregatedrating and recent recipes
+  count = 5 - len(recommendations)
+  if count > 0:
+    cursor = g.conn.execute(text("""SELECT R.RecipeID, R.RecipeName, R.AggregatedRating, P.DisplayName
+                               FROM Recipes_written_by R, Authors A, People P 
+                               WHERE R.UserID = A.UserID AND A.UserID = P.UserID
+                               ORDER BY R.AggregatedRating DESC, R.RecipeID DESC
+                               LIMIT 5"""))
+    g.conn.commit()
+    results = cursor.mappings().all()
+    cursor.close()
+    for result in results:
+      recipeid = result["recipeid"]
+      if (recipeid not in recommendations) and (len(recommendations) < 5):
+        recommendations[recipeid] = {
+          "recipename": result["recipename"],
+          "aggregatedrating": result["aggregatedrating"],
+          "authorname": result["displayname"]
+        }
+
+  return render_template("recommendations.html", recommendations=recommendations)
+
+
 @app.route('/login')
 def login():
     abort(401)

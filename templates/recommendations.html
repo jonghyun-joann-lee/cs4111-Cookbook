@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Recommendations</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        <option value="">-- None --</option>
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id == session.get('user_id', '') %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+  </form>
+
+  <span>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}  
+  </span>
+
+  <h2>Recommended Recipes for You</h2>
+  <p>You might like these recipes. Try them out!</p>
+
+  {% if recommendations %}
+    <ul>
+        {% for recipeid, recipe in recommendations.items() %}
+            <li>
+                <a href="{{ url_for('recipe_insights', recipe_id=recipeid) }}">{{ recipe.recipename }}</a>
+                by {{ recipe.authorname }} - Rating: {{ "{:.1f}".format(recipe.aggregatedrating) }}
+            </li>
+        {% endfor %}
+    </ul>
+  {% else %}
+    <p>No recommendations available at this time.</p>
+  {% endif %}
+
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>
