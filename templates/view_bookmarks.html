@@ -8,7 +8,7 @@
   </style>
 
 <head>
-  <title>GravanosCookBook - Search Results</title>
+  <title>GravanosCookBook - Bookmarked Recipes</title>
 </head>
 
 <body>
@@ -34,7 +34,7 @@
       {% endif %}
   </span>
 
-  <h2>Search Results</h2>
+  <h2>Bookmarked Recipes</h2>
 
   {% if recipes %}
     <table>
@@ -46,6 +46,7 @@
         <th>Aggregated Rating</th>
         <th>Calories</th>
         <th>Sugar (grams)</th>
+        <th>Remove Bookmark</th>
         </tr>
     
         {% for recipe_id, recipe in recipes.items() %}
@@ -73,11 +74,16 @@
                 N/A
             {% endif %}
         </td>
+        <td>
+            <form action="{{ url_for('remove_bookmark', recipe_id=recipe_id) }}" method="post">
+                <button type="submit">Remove</button>
+            </form>
+        </td>
         </tr>
         {% endfor %}
     </table>
   {% else %}
-    <p>No matching results found.</p>
+    <p>There are no bookmarked recipes.</p>
   {% endif %}
   
   <h3><a href="/">Go to main page</a></h3>

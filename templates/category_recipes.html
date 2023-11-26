@@ -8,7 +8,7 @@
   </style>
 
 <head>
-  <title>GravanosCookBook - {{name}}</title>
+  <title>GravanosCookBook - {{categoryname}}</title>
 </head>
 
 <body>
@@ -34,8 +34,44 @@
       {% endif %}
   </span>
 
-  <h2>{{name}} Recipes</h2>
+  <h2>{{categoryname}} Recipes</h2>
+
   {% if recipes %}
+  <form action="{{ url_for('filter_recipes') }}" method="get">
+    <input type="hidden" name="context" value="category">
+    <input type="hidden" name="categoryid" value="{{ categoryid }}">
+    <input type="hidden" name="categoryname" value="{{ categoryname }}">
+
+    <h3>Filter recipes by</h3>
+    
+    <label>Calories:</label>
+    <select name="calories" multiple>
+        <option value="less200">Less than or equal to 200</option>
+        <option value="200to400">200 to 400</option>
+        <option value="400to600">400 to 600</option>
+        <option value="600to800">600 to 800</option>
+        <option value="more800">More than or equal to 800</option>
+    </select>
+
+    <label>Total Time:</label>
+    <select name="totaltime" multiple>
+        <option value="less30">Less than or equal to 30 min</option>
+        <option value="30to60">30 min to 1 hr</option>
+        <option value="60to120">1 hr to 2 hr</option>
+        <option value="more120">More than or equal to 2 hr</option>
+    </select>
+
+    <br>
+
+    <label>Aggregated Rating:</label>
+    <input type="checkbox" name="aggregatedrating" value="true"> Descending Order
+
+    <label>, Sugar:</label>
+    <input type="checkbox" name="sugar" value="true"> Ascending Order
+ 
+    <button type="submit">Apply Filters</button>
+  </form>
+
     <table>
         <tr>
         <th>Recipe Name</th>
@@ -49,7 +85,7 @@
         {% for recipe in recipes %}
         <tr>
         <td><a href="/recipe/{{ recipe[6] }}">{{ recipe[0] }}</a></td> <!-- recipe[0]=RecipeName, recipe[6]=RecipeID -->
-        <td>{{ recipe[1] }}</td> <!-- Author -->
+        <td><a href="{{ url_for('user_profile', user_id=recipe[7]) }}">{{ recipe[1] }}</a></td> <!-- Author -->
         <td>{{ recipe[2] }}</td> <!-- Total Time -->
         <td>{{ "{:.1f}".format(recipe[3]) }}</td> <!-- Aggregated Rating -->
         <td>
@@ -70,7 +106,7 @@
         {% endfor %}
     </table>
   {% else %}
-    <p>There are no recipes added to this category yet.</p>
+    <p>There are no matching recipes.</p>
   {% endif %}
   
   <h3><a href="/">Go to main page</a></h3>

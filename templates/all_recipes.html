@@ -37,6 +37,39 @@
   <h2>All Recipes</h2>
 
   {% if recipes %}
+  <form action="{{ url_for('filter_recipes') }}" method="get">
+    <input type="hidden" name="context" value="all">
+
+    <h3>Filter recipes by</h3>
+    
+    <label>Calories:</label>
+    <select name="calories" multiple>
+        <option value="less200">Less than or equal to 200</option>
+        <option value="200to400">200 to 400</option>
+        <option value="400to600">400 to 600</option>
+        <option value="600to800">600 to 800</option>
+        <option value="more800">More than or equal to 800</option>
+    </select>
+
+    <label>Total Time:</label>
+    <select name="totaltime" multiple>
+        <option value="less30">Less than or equal to 30 min</option>
+        <option value="30to60">30 min to 1 hr</option>
+        <option value="60to120">1 hr to 2 hr</option>
+        <option value="more120">More than or equal to 2 hr</option>
+    </select>
+
+    <br>
+
+    <label>Aggregated Rating:</label>
+    <input type="checkbox" name="aggregatedrating" value="true"> Descending Order
+
+    <label>, Sugar:</label>
+    <input type="checkbox" name="sugar" value="true"> Ascending Order
+ 
+    <button type="submit">Apply Filters</button>
+  </form>
+
     <table>
         <tr>
         <th>Recipe Name</th>
@@ -51,7 +84,7 @@
         {% for recipe_id, recipe in recipes.items() %}
         <tr>
         <td><a href="/recipe/{{ recipe_id }}">{{ recipe.recipename }}</a></td> 
-        <td>{{ recipe.displayname }}</td> 
+        <td><a href="{{ url_for('user_profile', user_id=recipe.authorid) }}">{{ recipe.displayname }}</a></td> 
         <td>
             {% for category_name, category_id in recipe.categories %} <!-- recipe.categories = [(CategoryName, CategoryID)] -->
               <a href="{{ url_for('category', category_id=category_id) }}">{{ category_name }}</a>{% if not loop.last %}, {% endif %}
@@ -77,7 +110,7 @@
         {% endfor %}
     </table>
   {% else %}
-    <p>There are no recipes added to GravanosCookBook.</p>
+    <p>There are no matching recipes.</p>
   {% endif %}
   
   <h3><a href="/">Go to main page</a></h3>

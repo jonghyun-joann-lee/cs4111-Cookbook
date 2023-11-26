@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - Following List</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        <option value="">-- None --</option>
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id == session.get('user_id', '') %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+  </form>
+
+  <span>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}  
+  </span>
+
+  <h2>Following List</h2>
+
+  {% if following %}
+    <p>You are following the below list of authors.</p>
+
+    <ul>
+        {% for followeeid, displayname in following.items() %}
+            <li>
+                <a href="{{ url_for('user_profile', user_id=followeeid) }}">{{ displayname }}</a>
+            </li>
+        {% endfor %}
+  </ul>
+  {% else %}
+    <p>You are not following any authors.</p>
+  {% endif %}
+
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>

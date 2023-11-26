@@ -253,7 +253,7 @@ def category(category_id):
   params_dict = {"categoryid": category_id}
   # Get all the recipes that belong to the given category_id
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID
+                               SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID, A.UserID
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -264,7 +264,7 @@ def category(category_id):
   results = cursor.mappings().all()
   for result in results:
     formatted_time = convert_time(result["totaltime"])
-    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"]))
+    recipes_in_category.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"], result["userid"]))
   cursor.close()
 
   # Get the name of the category with the given category_id
@@ -276,7 +276,7 @@ def category(category_id):
     category_name = result[0]
   cursor.close()
 
-  context = dict(id=category_id, name=category_name, recipes=recipes_in_category)
+  context = dict(categoryid=category_id, categoryname=category_name, recipes=recipes_in_category)
   return render_template("category_recipes.html", **context)
 
 
@@ -286,7 +286,7 @@ def recipes():
   # Get all recipes from the database
   # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
   cursor = g.conn.execute(text("""
-                               SELECT R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+                               SELECT A.UserID, R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
                                FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
                                WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
                                AND R.UserID = A.UserID AND A.UserID = P.UserID
@@ -303,6 +303,7 @@ def recipes():
       formatted_time = convert_time(result["totaltime"])
 
       all_recipes[recipe_id] = {
+        "authorid": result["userid"],
         "recipename": result["recipename"],
         "displayname": result["displayname"],
         "categories": [(result["categoryname"], result["categoryid"])],
@@ -324,7 +325,7 @@ def recipes():
 @app.route('/recipe/<int:recipe_id>')
 def recipe_insights(recipe_id):
   params_dict = {"recipeid": recipe_id}
-  # Get all details of the recipe, categories that it belongs to, and the author's name
+  # Get all details of the recipe, categories that it belongs to, and the author's name and id
   # If a recipe belongs to more than one category, the resulting table will contain more than one row for that recipe
   cursor = g.conn.execute(text("""
                                SELECT R.*, P.DisplayName, C.CategoryName, C.CategoryID
@@ -345,6 +346,7 @@ def recipe_insights(recipe_id):
       formatted_totaltime = convert_time(result["totaltime"])
 
       recipe_details = {
+        "authorid": result["userid"],
         "recipeid": result["recipeid"],
         "recipename": result["recipename"],
         "cooktime": formatted_cooktime,
@@ -510,6 +512,7 @@ def search_results():
         formatted_time = convert_time(result["totaltime"])
 
         query_results[recipe_id] = {
+          "authorid": result["userid"],
           "recipename": result["recipename"],
           "displayname": result["displayname"],
           "categories": [(result["categoryname"], result["categoryid"])],
@@ -883,10 +886,371 @@ def submit_recipe():
 
   return render_template('submit_recipe.html', categories=categories, ingredients=ingredients)
 
-# Edit an existing recipe (can only be done by the recipe's author)
+
+# Filter recipes by calories, sugar, aggregatedrating, and totaltime
+@app.route('/filter_recipes', methods=['GET'])
+def filter_recipes():
+  # First, figure out what page this filtering feature is being shown
+  context = request.args.get('context') # Context can be all or category
+  categoryid = request.args.get('categoryid')
+  categoryname = request.args.get('categoryname')
+
+  # Base query based on context
+  if context == "category" and categoryid:
+    query = """SELECT R.RecipeName, P.DisplayName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, R.RecipeID, A.UserID
+            FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+            WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+            AND R.UserID = A.UserID AND A.UserID = P.UserID AND C.CategoryID = :categoryid"""
+    params_dict = {"categoryid": categoryid}
+  else: # Context is 'all'
+    query = """SELECT A.UserID, R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+            FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P
+            WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+            AND R.UserID = A.UserID AND A.UserID = P.UserID"""
+    params_dict = {}
+
+  # Get filter options from user
+  selected_calories = request.args.getlist('calories')
+  if request.args.get('sugar') == "true":
+    order_sugar = True
+  else:
+    order_sugar = False
+  if request.args.get('aggregatedrating') == "true":
+    order_rating = True
+  else:
+    order_rating = False
+  selected_totaltime = request.args.getlist('totaltime')
+
+  filters = [] # all chosen filter options
+
+  calories_options = {
+    "less200": "(R.Calories <= 200)",
+    "200to400": "(R.Calories BETWEEN 200 AND 400)",
+    "400to600": "(R.Calories BETWEEN 400 AND 600)",
+    "600to800": "(R.Calories BETWEEN 600 AND 800)",
+    "more800": "(R.Calories >= 800)"
+  }
+  calories_filters = []
+  for cal in selected_calories:
+    calories_filters.append(calories_options[cal])
+  filters.append(' OR '.join(calories_filters)) # Add chosen calorie filters to whole filters list
+
+  time_options = {
+    "less30": "(R.TotalTime <= 30)",
+    "30to60": "(R.TotalTime BETWEEN 30 AND 60)",
+    "60to120": "(R.TotalTime BETWEEN 60 AND 120)",
+    "more120": "(R.TotalTime >= 120)"
+  }
+  time_filters = []
+  for time in selected_totaltime:
+    time_filters.append(time_options[time])
+  filters.append(' OR '.join(time_filters)) # Add chosen totaltime filters to whole filters list
+
+  for filter in filters:
+    if filter:
+      query += " AND (" + filter + ")" # Add WHERE conditions to query based on chosen filters
+
+  # Add ORDER BY to query if sugar or rating selected
+  order_clauses = []
+  if order_rating:
+    order_clauses.append("R.AggregatedRating DESC") # Order recipes by descending order of aggregatedrating
+  if order_sugar:
+    order_clauses.append("R.Sugar ASC") # Order recipes by ascending order of sugar 
+  if order_clauses:
+    query += " ORDER BY " + ", ".join(order_clauses)
+  
+  # Execute the query
+  cursor = g.conn.execute(text(query), params_dict)
+  g.conn.commit()
+  results = cursor.mappings().all()
+  
+  # Process result and render to template based on context
+  if context == "category":
+    filtered_recipes = []
+    for result in results:
+      formatted_time = convert_time(result["totaltime"])
+      filtered_recipes.append((result["recipename"], result["displayname"], formatted_time, result["aggregatedrating"], result["calories"], result["sugar"], result["recipeid"], result["userid"]))
+    cursor.close()
+    context = dict(categoryid=categoryid, categoryname=categoryname, recipes=filtered_recipes)
+    return render_template("category_recipes.html", **context)
+  
+  else:
+    filtered_recipes = {}
+    for result in results:
+      recipe_id = result["recipeid"]
+      if recipe_id not in filtered_recipes: # If it is the first row for a recipe
+        # First, convert total time into ~ hr ~ min
+        formatted_time = convert_time(result["totaltime"])
+        filtered_recipes[recipe_id] = {
+          "authorid": result["userid"],
+          "recipename": result["recipename"],
+          "displayname": result["displayname"],
+          "categories": [(result["categoryname"], result["categoryid"])],
+          "totaltime": formatted_time, 
+          "aggregatedrating": result["aggregatedrating"], 
+          "calories": result["calories"], 
+          "sugar": result["sugar"]
+          }
+      else: # if recipe_id is already in filtered_recipes (i.e., if recipe belongs to more than one category)
+        filtered_recipes[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+    cursor.close()
+    context = {"recipes": filtered_recipes}
+    return render_template("all_recipes.html", **context)
 
 
-# Delete an existing recipe (can only be done by the recipe's author)
+# User profile page to display user-related information
+@app.route('/user_profile/<int:user_id>')
+def user_profile(user_id): # user_id is the id of the user this profile is displaying
+  current_id = session.get('user_id') # current_id is the id of the current session's user
+  if not current_id: # If no user selected
+    message = "You must select a user to view user profiles."
+    return render_template("error.html", message=message)
+  
+  # Get all basic information about user
+  cursor = g.conn.execute(text("""SELECT *
+                               FROM Users U, People P
+                               WHERE U.UserID = P.UserID AND U.UserID = :userid
+                               """), {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  if not results:
+    message = "User not found"
+    return render_template("error.html", message=message)
+
+  user = {}
+  for result in results: 
+    user["userid"] = result["userid"]
+    user["reviewswritten"] = result["reviewswritten"]
+    user["following"] = result["following"]
+    user["firstname"] = result["firstname"]
+    user["lastname"] = result["lastname"]
+    user["displayname"] = result["displayname"]
+    user["email"] = result["email"]
+    user["dob"] = result["dateofbirth"]
+  cursor.close()
+
+  # Get additional details if user is in Authors
+  cursor = g.conn.execute(text("""SELECT * FROM Authors A WHERE A.UserID = :userid"""), 
+                          {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  author = {}
+  for result in results:
+    author["recipeswritten"] = result["recipeswritten"]
+    author["followers"] = result["followers"]
+  cursor.close()
+
+  # Display Follow/Unfollow button if user is in Authors
+  is_following = False
+  if current_id and author:
+    # Check if the current user is following the author -> Display unfollow button
+    # If not -> Display follow button
+    cursor = g.conn.execute(text("""SELECT * FROM follows
+                               WHERE FollowerID = :userid AND FolloweeID = :authorid"""),
+                               {"userid": current_id, "authorid": user_id})
+    g.conn.commit()
+    results = cursor.mappings().all()
+    cursor.close()
+    if results:
+      is_following = True
+
+  return render_template("user_profile.html", user=user, author=author, current_id=current_id, author_id=user_id, is_following=is_following)
+
+
+# Allow users to bookmark favorite recipes 
+@app.route('/bookmark_recipe/<int:recipe_id>', methods=['POST'])
+def bookmark_recipe(recipe_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to bookmark a recipe."
+    return render_template("error.html", message=message)
+
+  # Need to check if the recipe is already bookmarked
+  cursor = g.conn.execute(text("""SELECT * FROM bookmarked 
+                               WHERE UserID = :userid AND RecipeID = :recipeid"""), 
+                               {"userid": user_id, "recipeid": recipe_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+
+  if results:
+    message = "This recipe is already bookmarked."
+    return render_template("error.html", message=message)
+
+  # If not, add bookmark
+  g.conn.execute(text("""INSERT INTO bookmarked (UserID, RecipeID) 
+                      VALUES (:userid, :recipeid)"""), {"userid": user_id, "recipeid": recipe_id})
+  g.conn.commit()
+  message = "Recipe added to your bookmark successfully."
+  return render_template("bookmark_message.html", message=message)
+
+
+# Allow users to remove bookmarks
+@app.route('/remove_bookmark/<int:recipe_id>', methods=['POST'])
+def remove_bookmark(recipe_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to remove bookmarks."
+    return render_template("error.html", message=message)
+  
+  # Remove from bookmarked table
+  g.conn.execute(text("""DELETE FROM bookmarked
+                      WHERE UserID = :userid AND RecipeID = :recipeid"""), 
+                      {"userid": user_id, "recipeid": recipe_id})
+  g.conn.commit()
+  return redirect(url_for('view_bookmarks'))
+
+
+# View bookmarked recipes
+@app.route('/view_bookmarks')
+def view_bookmarks():
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to view bookmarks."
+    return render_template("error.html", message=message)
+
+  # Get information about the recipes as usual
+  cursor = g.conn.execute(text("""
+                               SELECT A.UserID, R.RecipeID, R.RecipeName, P.DisplayName, C.CategoryName, R.TotalTime, R.AggregatedRating, R.Calories, R.Sugar, C.CategoryID
+                               FROM Recipes_written_by R, Categories C, belongs_to B, Authors A, People P, Users U, bookmarked M
+                               WHERE R.RecipeID = B.RecipeID AND B.CategoryID = C.CategoryID
+                               AND R.UserID = A.UserID AND A.UserID = P.UserID
+                               AND R.RecipeID = M.RecipeID AND M.UserID = U.UserID AND M.UserID = :userid
+                               """), {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+
+  # Process the result so that we (intuitionally) have only one row for one recipe (handle multiple categories)
+  all_recipes = {} # This is going to be a nested dictionary
+  for result in results:
+    recipe_id = result["recipeid"]
+    if recipe_id not in all_recipes: # If it is the first row for a recipe
+      # First, convert total time into ~ hr ~ min
+      formatted_time = convert_time(result["totaltime"])
+
+      all_recipes[recipe_id] = {
+        "authorid": result["userid"],
+        "recipename": result["recipename"],
+        "displayname": result["displayname"],
+        "categories": [(result["categoryname"], result["categoryid"])],
+        "totaltime": formatted_time, 
+        "aggregatedrating": result["aggregatedrating"], 
+        "calories": result["calories"], 
+        "sugar": result["sugar"]
+        }
+    else: # if recipe_id is already in all_recipes (i.e., if recipe belongs to more than one category)
+      all_recipes[recipe_id]["categories"].append((result["categoryname"], result["categoryid"]))
+  
+  cursor.close()
+  
+  context = {"recipes": all_recipes}
+  return render_template("view_bookmarks.html", **context)
+
+
+# Users can follow Authors
+@app.route('/follow_author/<int:author_id>', methods=['POST'])
+def follow_author(author_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to follow authors."
+    return render_template("error.html", message=message)
+  
+  if user_id == author_id: # If user tries to follow themselves
+    message = "You cannot follow yourself."
+    return render_template("error.html", message=message)
+  
+  # Check if the user is already following the author
+  cursor = g.conn.execute(text("""SELECT * FROM follows
+                               WHERE FollowerID = :userid AND FolloweeID = :authorid"""),
+                               {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  if results:
+    message = "You are already following this author."
+    return render_template("error.html", message=message)
+  
+  # If not, insert into follows table
+  g.conn.execute(text("""INSERT INTO follows (FollowerID, FolloweeID) VALUES (:userid, :authorid)"""), 
+                 {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+
+  # Update Following count for user
+  g.conn.execute(text("""UPDATE Users SET Following = Following + 1 WHERE UserID = :userid"""), 
+                 {"userid": user_id})
+  g.conn.commit()
+
+  # Update Followers count for author
+  g.conn.execute(text("""UPDATE Authors SET Followers = Followers + 1 WHERE UserID = :authorid"""), 
+                 {"authorid": author_id})
+  g.conn.commit()
+
+  return redirect(url_for('user_profile', user_id=author_id))
+
+
+# Users can unfollow Authors
+@app.route('/unfollow_author/<int:author_id>', methods=['POST'])
+def unfollow_author(author_id):
+  user_id = session.get('user_id') # Get the current user's ID
+  if not user_id: # If no user selected
+    message = "You must select a user to unfollow authors."
+    return render_template("error.html", message=message)
+  
+  # Delete relationship from follows table
+  g.conn.execute(text("""DELETE FROM follows 
+                      WHERE FollowerID = :userid AND FolloweeID = :authorid"""), 
+                      {"userid": user_id, "authorid": author_id})
+  g.conn.commit()
+
+  # Update Following count for user
+  g.conn.execute(text("""UPDATE Users SET Following = Following - 1 WHERE UserID = :userid"""), 
+                 {"userid": user_id})
+  g.conn.commit()
+
+  # Update Followers count for author
+  g.conn.execute(text("""UPDATE Authors SET Followers = Followers - 1 WHERE UserID = :authorid"""), 
+                 {"authorid": author_id})
+  g.conn.commit()
+
+  return redirect(url_for('user_profile', user_id=author_id))
+
+
+# View following list
+@app.route('/user_following/<int:user_id>')
+def user_following(user_id):
+  cursor = g.conn.execute(text("""SELECT F.FolloweeID, P.DisplayName
+                               FROM follows F, People P
+                               WHERE F.FolloweeID = P.UserID AND F.FollowerID = :userid"""), 
+                               {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  following = {}
+  for result in results:
+    followeeid = result["followeeid"]
+    following[followeeid] = result["displayname"]
+  
+  return render_template('following_list.html', following=following, user_id=user_id)
+
+
+# View followers list
+@app.route('/user_followers/<int:user_id>')
+def user_followers(user_id):
+  cursor = g.conn.execute(text("""SELECT F.FollowerID, P.DisplayName
+                               FROM follows F, People P
+                               WHERE F.FollowerID = P.UserID AND F.FolloweeID = :userid"""), 
+                               {"userid": user_id})
+  g.conn.commit()
+  results = cursor.mappings().all()
+  cursor.close()
+  followers = {}
+  for result in results:
+    followerid = result["followerid"]
+    followers[followerid] = result["displayname"]
+  
+  return render_template('followers_list.html', followers=followers, user_id=user_id)
 
 
 @app.route('/login')

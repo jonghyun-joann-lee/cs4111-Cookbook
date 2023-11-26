@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<head>
+  <title>GravanosCookBook - User Profile - {{ user.displayname }}</title>
+</head>
+
+<body>
+  <h1>GravanosCookBook</h1>
+
+  <form action="{{ url_for('set_user') }}" method="post" style="display: inline;">
+    <label for="user_id">Select a user: </label>
+    <select name="user_id" id="user_id" onchange="this.form.submit()">
+        <option value="">-- None --</option>
+        {% for user_id, displayname in users.items() %}
+            <option value="{{ user_id }}" {% if user_id == session.get('user_id', '') %}selected{% endif %}>
+                {{ displayname }}
+            </option>
+        {% endfor %}
+    </select>
+  </form>
+
+  <span>
+    {% if session.get('user_id') %}
+        Current user is {{ users[session['user_id']] }}
+    {% else %}
+        No user selected.
+    {% endif %}  
+  </span>
+
+  <h2>User Profile: {{ user.displayname }}</h2>
+
+  <p><strong>Reviews Written:</strong> {{ user.reviewswritten }}</p>
+  <p><strong>Following:</strong> {{ user.following }}</p>
+  {% if author %} <!-- Display these info if the user is an author -->
+    <p><strong>Recipes Written:</strong> {{ author.recipeswritten }}</p>
+    <p><strong>Followers:</strong> {{ author.followers }}</p>
+    {% if current_id and current_id != author_id %} <!-- If current user selected and current user != author -->
+        {% if is_following %} <!-- If current user already following author -->
+            <form action="{{ url_for('unfollow_author', author_id=author_id) }}" method="post">
+                <button type="submit">Unfollow</button>
+            </form>
+        {% else %} <!-- If current user not following author -->
+            <form action="{{ url_for('follow_author', author_id=author_id) }}" method="post">
+                <button type="submit">Follow</button>
+            </form>
+        {% endif %}
+    {% endif %}
+  {% endif %}
+
+  <br>
+
+  {% if session.get('user_id') == user.userid %} <!-- Display these info only when current user is viewing their profile -->
+    <p><strong>First Name:</strong> {{ user.firstname }}</p>
+    <p><strong>Last Name:</strong> {{ user.lastname }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Date of Birth:</strong> {{ user.dob }}</p>
+    <p><a href="{{ url_for('view_bookmarks') }}">My Bookmarks</a></p>
+    <p><a href="{{ url_for('user_following', user_id=user.userid) }}">Following</a></p>
+    <p><a href="{{ url_for('user_followers', user_id=user.userid) }}">Followers</a></p>
+  {% endif %}
+
+  <br>
+
+  <h3><a href="/">Go to main page</a></h3>
+
+</body>
+
+</html>
